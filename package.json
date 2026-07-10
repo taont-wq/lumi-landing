@@ -8,6 +8,7 @@
     "dev": "echo 'Static files served via Vercel dev or any HTTP server'"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "hono": "^4.12.0"
   },
   "devDependencies": {

@@ -160,14 +160,16 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
  */
 async function sbPublic(path, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${path}`;
+  const { headers: optHeaders, ...rest } = options;
   return fetch(url, {
+    method: rest.method || 'GET',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       'Accept': 'application/json',
-      ...options.headers,
+      ...(optHeaders || {}),
     },
-    ...options,
+    ...rest,
   });
 }
 
@@ -177,14 +179,16 @@ async function sbPublic(path, options = {}) {
  */
 async function sbAdmin(path, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${path}`;
+  const { headers: optHeaders, ...rest } = options;
   return fetch(url, {
+    method: rest.method || 'GET',
     headers: {
       'apikey': SUPABASE_SERVICE_KEY,
       'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
       'Accept': 'application/json',
-      ...options.headers,
+      ...(optHeaders || {}),
     },
-    ...options,
+    ...rest,
   });
 }
 
@@ -215,7 +219,11 @@ app.get('/api/config', (c) => {
   return c.json({
     phone: process.env.PHONE_NUMBER || '',
     company: process.env.SITE_NAME || 'Lumi Design',
+    companyFull: 'CÔNG TY TNHH KIẾN TRÚC & NỘI THẤT LUMI DESIGN',
+    tagline: 'Nâng tầm cuộc sống',
     siteUrl: process.env.SITE_URL || '',
+    logo: process.env.LOGO_URL || '',
+    zalo_oa_id: process.env.ZALO_OA_ID || '',
   });
 });
 
@@ -349,7 +357,7 @@ app.get('/api/featured', async (c) => {
     if (rateLimit(c, 'public')) return c.json({ error: 'Too many requests' }, 429);
 
     const res = await sbPublic(
-      'units?select=id,code,area,bedrooms,style,images,project_id&status=eq.published&order=updated_at.desc&limit=6'
+      'units?select=id,code,area,bedrooms,style,images,project_id&is_featured=is.true&status=eq.published&order=updated_at.desc&limit=6'
     );
     if (!res.ok) return c.json({ error: 'Failed to load featured' }, 502);
 
@@ -547,10 +555,13 @@ app.get('/api/admin/units', async (c) => {
     const offset = (page - 1) * limit;
     const status = c.req.query('status');
     const search = c.req.query('search');
+    const featured = c.req.query('featured');
 
     let filter = '';
     if (status) filter += `&status=eq.${encodeURIComponent(status)}`;
     if (search) filter += `&code=ilike.*${encodeURIComponent(search)}*`;
+    if (featured === 'true') filter += '&is_featured=is.true';
+    if (featured === 'false') filter += '&is_featured=is.false';
 
     const dataRes = await sbAdmin(
       `units?select=*,project:project_id(name,slug),tower:tower_id(name,slug)&order=updated_at.desc&limit=${limit}&offset=${offset}${filter}`
@@ -656,6 +667,40 @@ app.put('/api/admin/units/:id', async (c) => {
     return c.json(updated[0] || updated, 200);
   } catch (err) {
     console.error('PUT /api/admin/units/:id error:', err.message);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+/**
+ * PATCH /api/admin/units/featured/:id — toggle is_featured
+ */
+app.patch('/api/admin/units/featured/:id', async (c) => {
+  try {
+    const authError = requireAdmin(c);
+    if (authError) return c.json({ error: 'Unauthorized' }, 401);
+
+    if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
+
+    const id = c.req.param('id');
+    if (!id || id.length !== 36) return c.json({ error: 'Invalid unit ID' }, 400);
+
+    const body = await c.req.json().catch(() => ({}));
+    const isFeatured = body.is_featured === true || body.is_featured === 'true';
+
+    const updateRes = await sbAdmin(`units?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify({ is_featured: isFeatured, updated_at: new Date().toISOString() }),
+    });
+
+    if (!updateRes.ok) return c.json({ error: 'Failed to update featured status' }, 502);
+
+    const updated = await updateRes.json();
+    logAudit('unit.featured_toggle', `unit:${id}`, 'admin');
+
+    return c.json({ is_featured: isFeatured, unit: updated[0] });
+  } catch (err) {
+    console.error('PATCH /api/admin/units/featured/:id error:', err.message);
     return c.json({ error: 'Internal server error' }, 500);
   }
 });

@@ -8,6 +8,7 @@ const ALLOWED_UNIT_FIELDS = [
   'style', 'description', 'status',
   'features', 'images', 'floor_plan', 'videos',
   'zalo_conversation_id',
+  'is_featured',
 ];
 
 const ALLOWED_PROJECT_FIELDS = [
@@ -36,6 +37,7 @@ const FIELD_TYPES = {
   floor_plan:    { type: 'string', maxLen: 500 },
   videos:        { type: 'array', maxItems: 20 },
   zalo_conversation_id: { type: 'string', maxLen: 100 },
+  is_featured:      { type: 'boolean' },
   name:          { type: 'string', maxLen: 200 },
   slug:          { type: 'string', maxLen: 100, pattern: /^[a-z0-9-]+$/ },
   thumbnail:     { type: 'string', maxLen: 500 },

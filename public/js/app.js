@@ -58,8 +58,27 @@ async function loadConfig() {
     window.contactPhone = config.phone; // FRONT-03: cho modal dùng
   }
   window.zaloOA = config.zalo_oa_id || '';
+  window.siteUrl = config.site_url || 'https://noithatlumi.vn';
   const footerYear = document.getElementById('footer-year');
   if (footerYear) footerYear.textContent = new Date().getFullYear(); // FRONT-04
+
+  // Set Zalo links
+  const zaloOA = window.zaloOA;
+  if (zaloOA) {
+    const zaloLinks = document.querySelectorAll('#header-zalo, #contact-zalo');
+    zaloLinks.forEach(el => {
+      el.href = `https://zalo.me/${zaloOA}`;
+    });
+  }
+
+  // Set logo if configured
+  if (config.logo) {
+    const logo = document.getElementById('header-logo');
+    if (logo) {
+      logo.innerHTML = `<img src="${escapeHtml(config.logo)}" alt="${escapeHtml(config.company)}" class="header-logo-img" style="height:36px;width:auto" />`;
+      logo.style.display = 'flex';
+    }
+  }
 }
 
 // =============================================================

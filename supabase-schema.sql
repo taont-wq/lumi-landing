@@ -62,6 +62,7 @@ create table if not exists units (
   floor_plan  text default '',                   -- Cloudinary PDF URL
   videos      jsonb default '[]'::jsonb not null,        -- [{type:"youtube",url:"..."}]
   zalo_conversation_id text default '',          -- trace Zalo push origin
+  is_featured boolean default false not null,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );

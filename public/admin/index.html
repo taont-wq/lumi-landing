@@ -162,6 +162,11 @@
             <option value="hidden">Ẩn</option>
             <option value="sold">Đã bán</option>
           </select>
+          <select id="filter-featured" class="filter-select">
+            <option value="">Tất cả nổi bật</option>
+            <option value="true">Nổi bật</option>
+            <option value="false">Không nổi bật</option>
+          </select>
           <input type="text" id="search-input" class="search-input" placeholder="Tìm mã căn..." autocomplete="off">
         </div>
         <div class="toolbar-right">
@@ -182,6 +187,7 @@
                 <th>PN</th>
                 <th>Trạng thái</th>
                 <th>Cập nhật</th>
+                <th>Nổi bật</th>
                 <th></th>
               </tr>
             </thead>
@@ -266,6 +272,12 @@
         <div class="form-group form-full">
           <label>Features (mỗi feature một dòng)</label>
           <textarea id="unit-features" placeholder="Hồ bơi&#10;Công viên&#10;Bãi đỗ xe"></textarea>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="unit-featured" style="width:18px;height:18px">
+            <span>Hiển thị trong mục căn hộ nổi bật</span>
+          </label>
         </div>
       </div>
       <div class="modal-footer">

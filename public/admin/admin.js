@@ -14,6 +14,7 @@ let token = sessionStorage.getItem('lumi_admin_token') || '';
 let currentUser = null;
 let currentPage = 1;
 let currentFilter = '';
+let currentFeatured = '';
 let currentSearch = '';
 
 // =============================================================
@@ -32,6 +33,7 @@ function bindEvents() {
   document.getElementById('login-form')?.addEventListener('submit', onLogin);
   document.getElementById('logout-btn')?.addEventListener('click', onLogout);
   document.getElementById('filter-status')?.addEventListener('change', onFilterChange);
+  document.getElementById('filter-featured')?.addEventListener('change', onFilterChange);
   document.getElementById('search-input')?.addEventListener('input', debounce(onSearchChange, 400));
   document.getElementById('add-unit-btn')?.addEventListener('click', () => openForm());
   document.getElementById('modal-close-btn')?.addEventListener('click', closeForm);
@@ -159,6 +161,7 @@ async function loadUnits() {
     params.set('page', currentPage);
     params.set('limit', 30);
     if (currentFilter) params.set('status', currentFilter);
+    if (currentFeatured) params.set('featured', currentFeatured);
     if (currentSearch) params.set('search', currentSearch);
 
     const result = await apiAdmin(`/admin/units?${params}`);
@@ -167,7 +170,7 @@ async function loadUnits() {
     content.style.display = 'block';
 
     if (!result.data?.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Không có căn hộ nào</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Không có căn hộ nào</td></tr>';
       document.getElementById('pagination').innerHTML = '';
       return;
     }
@@ -181,6 +184,13 @@ async function loadUnits() {
         <td>${u.bedrooms || '—'}</td>
         <td><span class="status-badge status-${esc(u.status)}">${statusLabel(u.status)}</span></td>
         <td style="white-space:nowrap;font-size:0.75rem;color:#9CA3AF">${u.updated_at ? new Date(u.updated_at).toLocaleDateString('vi-VN') : '—'}</td>
+        <td style="text-align:center">
+          <button class="btn btn-sm ${u.is_featured ? 'btn-primary' : 'btn-secondary'}"
+            onclick="toggleFeatured('${u.id}', ${u.is_featured ? 'false' : 'true'})"
+            title="${u.is_featured ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật'}">
+            ${u.is_featured ? '★' : '☆'}
+          </button>
+        </td>
         <td>
           <div class="action-btns">
             <button class="btn btn-secondary btn-sm" onclick="editUnit('${u.id}')">Sửa</button>
@@ -231,6 +241,7 @@ window.goPage = function(page) {
 // =============================================================
 function onFilterChange() {
   currentFilter = document.getElementById('filter-status').value;
+  currentFeatured = document.getElementById('filter-featured').value;
   currentPage = 1;
   loadUnits();
 }
@@ -326,6 +337,7 @@ function openForm(unitData = null) {
     document.getElementById('unit-floor-plan').value = unitData.floor_plan || '';
     document.getElementById('unit-sort-order').value = unitData.sort_order || '';
     document.getElementById('unit-features').value = (unitData.features || []).join('\n');
+    document.getElementById('unit-featured').checked = unitData.is_featured === true;
 
     // Load và select project/tower
     if (unitData.project_id) {
@@ -395,6 +407,7 @@ async function onSaveUnit(e) {
     floor_plan: document.getElementById('unit-floor-plan').value.trim(),
     sort_order: parseInt(document.getElementById('unit-sort-order').value) || 0,
     features: document.getElementById('unit-features').value.split('\n').map(s => s.trim()).filter(Boolean),
+    is_featured: document.getElementById('unit-featured').checked,
   };
 
   if (!data.code) {
@@ -444,6 +457,23 @@ window.deleteUnit = function(id, code) {
       loadUnits();
     })
     .catch(err => showToast(err.message || 'Xoá thất bại', 'error'));
+};
+
+// =============================================================
+// FEATURED TOGGLE
+// =============================================================
+window.toggleFeatured = async function(id, newValue) {
+  try {
+    const isFeatured = newValue === 'true' || newValue === true;
+    await apiAdmin(`/admin/units/featured/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_featured: isFeatured }),
+    });
+    showToast(isFeatured ? 'Đã đánh dấu nổi bật' : 'Đã bỏ nổi bật', 'success');
+    loadUnits();
+  } catch (err) {
+    showToast(err.message || 'Thao tác thất bại', 'error');
+  }
 };
 
 // =============================================================

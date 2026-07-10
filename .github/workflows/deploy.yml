@@ -1,0 +1,68 @@
+# =============================================================
+# LUMI DESIGN — Auto Deploy
+# Trigger: push to main (hoặc manual dispatch)
+# Steps:
+#   1. Run Supabase SQL (schema + seed) via Management API
+#   2. Deploy to Vercel Production
+# =============================================================
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_supabase:
+        description: 'Bỏ qua Supabase SQL'
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ============================================================
+      # STEP 1: Supabase — run schema + seed SQL
+      # ============================================================
+      - name: Run Supabase SQL (schema + seed)
+        if: ${{ !inputs.skip_supabase }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "▶️ Running Supabase SQL..."
+          SQL=$(cat supabase-schema.sql supabase-seed.sql)
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query" \
+            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg query "$SQL" '{"query": $query}')")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
+            echo "❌ Supabase SQL failed!"
+            echo "$BODY"
+            exit 1
+          fi
+          echo "✅ Supabase SQL executed successfully"
+
+      # ============================================================
+      # STEP 2: Vercel Deploy
+      # ============================================================
+      - name: Deploy to Vercel (production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
