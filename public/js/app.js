@@ -58,7 +58,8 @@ async function loadConfig() {
     window.contactPhone = config.phone; // FRONT-03: cho modal dùng
   }
   window.zaloOA = config.zalo_oa_id || '';
-  document.getElementById('footer-year')?.textContent = new Date().getFullYear(); // FRONT-04
+  const footerYear = document.getElementById('footer-year');
+  if (footerYear) footerYear.textContent = new Date().getFullYear(); // FRONT-04
 }
 
 // =============================================================
