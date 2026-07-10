@@ -1,0 +1,15 @@
+{
+  "name": "lumi-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lumi Design Landing Page — Vanilla JS + Hono + Supabase",
+  "scripts": {
+    "dev": "echo 'Static files served via Vercel dev or any HTTP server'"
+  },
+  "dependencies": {
+    "hono": "^4.12.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  }
+}

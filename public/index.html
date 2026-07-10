@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lumi Design — Căn hộ cao cấp</title>
+  <meta name="description" content="Lumi Design — Tra cứu căn hộ cao cấp tại các dự án hàng đầu. Lọc theo dự án, toà nhà. Liên hệ: 058 929 4444">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph (Zalo, Facebook) -->
+  <meta property="og:title" content="Lumi Design — Căn hộ cao cấp">
+  <meta property="og:description" content="Tra cứu căn hộ cao cấp tại các dự án hàng đầu.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://lumidesign.vercel.app/">
+
+  <!-- Preload font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="/" class="header-logo">Lumi<span>Design</span></a>
+      <div class="header-contact">
+        <a href="tel:0589294444" class="header-phone" id="contact-phone" data-phone>058 929 4444</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO + FILTER ==================== -->
+  <section class="hero">
+    <h1 class="hero-title">Tra cứu căn hộ cao cấp</h1>
+    <p class="hero-subtitle">Dễ dàng tìm kiếm căn hộ ưng ý tại các dự án hàng đầu</p>
+
+    <div class="filter-group">
+      <select id="project-select" class="filter-select" aria-label="Chọn dự án">
+        <option value="">Đang tải dự án...</option>
+      </select>
+
+      <select id="tower-select" class="filter-select" aria-label="Chọn toà" disabled>
+        <option value="">Chọn dự án trước</option>
+      </select>
+
+      <div class="filter-search">
+        <svg class="filter-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Tìm mã căn (VD: B4.0806)" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== UNITS ==================== -->
+  <section class="section" id="units-section">
+    <div class="section-header">
+      <h2 class="section-title">Danh sách căn hộ</h2>
+      <p class="section-subtitle">Kết quả tìm kiếm theo bộ lọc của bạn</p>
+    </div>
+
+    <div id="unit-grid" class="unit-grid">
+      <div class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        </svg>
+        <p>Chọn dự án và toà để xem căn hộ</p>
+      </div>
+    </div>
+
+    <div class="load-more-wrapper">
+      <button id="load-more" class="btn-load-more" style="display:none">Xem thêm</button>
+    </div>
+  </section>
+
+  <!-- ==================== FEATURED ==================== -->
+  <section class="section" id="featured-section">
+    <div class="section-header">
+      <h2 class="section-title">Căn hộ nổi bật</h2>
+      <p class="section-subtitle">Những căn hộ mới nhất được cập nhật</p>
+    </div>
+    <div id="featured-grid" class="featured-grid">
+      <div class="loading-spinner"></div>
+    </div>
+  </section>
+
+  <!-- ==================== CONTACT ==================== -->
+  <section class="contact">
+    <div class="contact-inner">
+      <h2 class="contact-title">Liên hệ với chúng tôi</h2>
+      <a href="tel:0589294444" class="contact-phone" data-phone>058 929 4444</a>
+      <p class="contact-sub">Hỗ trợ tư vấn miễn phí 24/7</p>
+      <div class="contact-actions">
+        <a href="tel:0589294444" class="btn btn-primary">📞 Gọi ngay</a>
+        <a href="https://zalo.me" target="_blank" rel="noopener" class="btn btn-zalo">💬 Chat Zalo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <p>&copy; <span id="footer-year">2024</span> Lumi Design. Tất cả quyền được bảo lưu.</p>
+  </footer>
+
+  <!-- ==================== MODAL ==================== -->
+  <div id="modal-overlay" class="modal-overlay"></div>
+  <div id="unit-modal" class="modal">
+    <div id="modal-content" class="modal-content"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="/js/utils.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
