@@ -357,7 +357,7 @@ app.get('/api/featured', async (c) => {
     if (rateLimit(c, 'public')) return c.json({ error: 'Too many requests' }, 429);
 
     const res = await sbPublic(
-      'units?select=id,code,area,bedrooms,style,images,project_id&is_featured=is.true&status=eq.published&order=updated_at.desc&limit=6'
+      'units?select=id,code,area,bedrooms,style,images,project_id&is_featured=eq.true&status=eq.published&order=updated_at.desc&limit=6'
     );
     if (!res.ok) return c.json({ error: 'Failed to load featured' }, 502);
 
@@ -560,8 +560,8 @@ app.get('/api/admin/units', async (c) => {
     let filter = '';
     if (status) filter += `&status=eq.${encodeURIComponent(status)}`;
     if (search) filter += `&code=ilike.*${encodeURIComponent(search)}*`;
-    if (featured === 'true') filter += '&is_featured=is.true';
-    if (featured === 'false') filter += '&is_featured=is.false';
+    if (featured === 'true') filter += '&is_featured=eq.true';
+    if (featured === 'false') filter += '&is_featured=eq.false';
 
     const dataRes = await sbAdmin(
       `units?select=*,project:project_id(name,slug),tower:tower_id(name,slug)&order=updated_at.desc&limit=${limit}&offset=${offset}${filter}`
