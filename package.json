@@ -2,6 +2,7 @@
   "name": "lumi-landing",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Lumi Design Landing Page — Vanilla JS + Hono + Supabase",
   "scripts": {
     "dev": "echo 'Static files served via Vercel dev or any HTTP server'"
