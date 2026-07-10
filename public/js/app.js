@@ -21,6 +21,7 @@ let currentFilter = { project: '', tower: '', search: '' };
 let currentPage = 1;
 let totalPages = 1;
 const PAGE_SIZE = 20;
+const towerCache = new Map(); // projectId → towers[]
 
 // =============================================================
 // INIT
@@ -39,8 +40,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Bind events
   projectSelect?.addEventListener('change', onProjectChange);
   towerSelect?.addEventListener('change', onTowerChange);
-  searchInput?.addEventListener('input', debounce(onSearchChange, 400));
+  searchInput?.addEventListener('input', debounce(onSearchChange, 150));
   loadMoreBtn?.addEventListener('click', loadMore);
+
+  // Prefetch towers for first project (nếu có sẵn)
+  if (projectSelect && projectSelect.options.length > 1) {
+    const firstId = projectSelect.options[1].value;
+    if (firstId && !towerCache.has(firstId)) {
+      apiFetch(`/towers?project=${encodeURIComponent(firstId)}`)
+        .then(towers => { if (towers) towerCache.set(firstId, towers); })
+        .catch(() => {});
+    }
+  }
 });
 
 // =============================================================
@@ -108,38 +119,43 @@ async function onProjectChange() {
   currentFilter.project = projectId;
   currentFilter.tower = '';
   currentPage = 1;
+  // Clear search text when project changes for faster feel
+  if (searchInput) searchInput.value = '';
 
   // Reset tower select
   if (towerSelect) {
     if (!projectId) {
       towerSelect.innerHTML = '<option value="">Chọn dự án trước</option>';
       towerSelect.disabled = true;
-      renderUnits([]);
+      showUnitsSection(false);
       return;
     }
     setLoading(towerSelect, 'Đang tải toà...');
   }
 
-  try {
-    const towers = await apiFetch(`/towers?project=${encodeURIComponent(projectId)}`);
+  // Check cache first
+  let towers = towerCache.get(projectId);
+  if (!towers) {
+    towers = await apiFetch(`/towers?project=${encodeURIComponent(projectId)}`);
+    towerCache.set(projectId, towers);
+  }
 
-    // Discard stale response
-    if (requestId !== lastFilterRequest) return;
+  // Discard stale response
+  if (requestId !== lastFilterRequest) return;
 
-    if (towerSelect) {
-      towerSelect.disabled = false;
-      towerSelect.innerHTML = '<option value="">Chọn toà</option>'
-        + towers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-    }
+  if (towerSelect) {
+    towerSelect.disabled = false;
+    towerSelect.innerHTML = '<option value="">Chọn toà</option>'
+      + towers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  }
 
-    // Auto-load units nếu chỉ có 1 project (đã chọn, không auto load units)
-    // Load units for first tower if only one
-    if (towers.length === 1 && towerSelect) {
-      towerSelect.value = towers[0].id;
-      await loadUnits(towers[0].id, projectId, requestId);
-    } else {
-      renderUnits([]);
-    }
+  // Auto-load units nếu chỉ có 1 tower
+  if (towers.length === 1 && towerSelect) {
+    towerSelect.value = towers[0].id;
+    await loadUnits(towers[0].id, projectId, requestId);
+  } else {
+    showUnitsSection(false);
+  }
   } catch (err) {
     console.error('Load towers failed:', err);
     if (requestId === lastFilterRequest && towerSelect) {
@@ -170,6 +186,15 @@ async function onSearchChange() {
 // UNITS LOAD
 // =============================================================
 async function loadUnits(towerId, projectId, requestId, search) {
+  // Show units section khi có filter active
+  const hasFilter = towerId || projectId || (search && search.length > 0);
+  if (!hasFilter) {
+    showUnitsSection(false);
+    return;
+  }
+
+  showUnitsSection(true);
+
   if (unitGrid) {
     unitGrid.innerHTML = '<div class="loading-spinner"></div>';
   }
@@ -224,6 +249,15 @@ async function loadMore() {
     console.error('Load more failed:', err);
     currentPage--; // rollback
   }
+}
+
+// =============================================================
+// SECTION VISIBILITY
+// =============================================================
+function showUnitsSection(show) {
+  const section = document.getElementById('units-section');
+  if (!section) return;
+  section.style.display = show ? 'block' : 'none';
 }
 
 // =============================================================

@@ -461,15 +461,30 @@ input, select {
   font-weight: 500;
 }
 
-/* === FEATURED === */
+/* === FEATURED (trung tâm site) === */
 #featured-section {
   background: #ffffff;
+  padding: var(--space-4xl) var(--space-xl);
+  position: relative;
+}
+
+/* Gold accent bar at top */
+#featured-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
 }
 
 .featured-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-lg);
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-xl);
 }
 
 .featured-card {
@@ -479,17 +494,36 @@ input, select {
   box-shadow: var(--shadow);
   cursor: pointer;
   transition: transform var(--transition), box-shadow var(--transition);
-  border: 1px solid rgba(229, 186, 34, 0.06);
+  border: 1px solid rgba(229, 186, 34, 0.08);
+  position: relative;
 }
 
 .featured-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
   box-shadow: var(--shadow-lg), var(--shadow-gold);
-  border-color: rgba(229, 186, 34, 0.15);
+  border-color: rgba(229, 186, 34, 0.25);
+}
+
+/* Featured badge */
+.featured-card::after {
+  content: 'Nổi bật';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(229, 186, 34, 0.92);
+  color: var(--black);
+  z-index: 2;
+  backdrop-filter: blur(4px);
 }
 
 .featured-card-image {
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--black-mid);
 }
@@ -502,23 +536,33 @@ input, select {
 }
 
 .featured-card:hover .featured-card-image img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .featured-card-body {
-  padding: var(--space-md);
+  padding: var(--space-lg);
 }
 
 .featured-card-body h4 {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  margin-bottom: 4px;
   font-family: var(--font-heading);
+  color: var(--black);
 }
 
 .featured-card-body p {
   font-size: var(--font-size-sm);
   color: var(--text-light);
+}
+
+/* === UNITS SECTION (ẩn khi chưa lọc) === */
+#units-section {
+  transition: opacity 0.3s ease;
+}
+
+#units-section[style*="display: none"] {
+  display: none !important;
 }
 
 /* === CONTACT === */
