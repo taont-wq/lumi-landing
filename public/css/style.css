@@ -605,11 +605,14 @@ input, select {
   gap: var(--space-xl) var(--space-2xl);
   max-width: 1000px;
   margin: 0 auto;
+  align-items: start;
 }
 
-/* Zig-zag: even cards drop down for an asymmetric rhythm */
+/* Zig-zag: right column drops down via in-flow margin (no floating gap/overlap).
+   align-items:start keeps the left card top-aligned, so the empty space reads
+   as a deliberate, balanced brick rhythm rather than a void. */
 .featured-card.offset {
-  transform: translateY(48px);
+  margin-top: 56px;
 }
 
 .featured-card {
@@ -624,7 +627,7 @@ input, select {
 }
 
 .featured-card.offset:hover {
-  transform: translateY(42px);
+  transform: translateY(-6px);
 }
 
 .featured-card:hover {
@@ -1038,6 +1041,10 @@ input, select {
   transform: rotate(90deg);
 }
 
+.modal-close:active {
+  transform: rotate(90deg) scale(0.92);
+}
+
 .modal-content {
   padding: var(--space-xl);
 }
@@ -1188,6 +1195,10 @@ input, select {
   opacity: 1;
 }
 
+.modal-info {
+  text-align: left;
+}
+
 .modal-info h2 {
   font-family: var(--font-heading);
   font-size: var(--font-size-2xl);
@@ -1195,12 +1206,14 @@ input, select {
   color: var(--black);
   position: relative;
   padding-bottom: var(--space-sm);
+  padding-left: var(--space-md);
+  border-left: 3px solid var(--gold);
 }
 
 .modal-info h2::after {
   content: "";
   position: absolute;
-  left: 0;
+  left: calc(var(--space-md) + 3px);
   bottom: 0;
   width: 48px;
   height: 3px;
@@ -1229,8 +1242,9 @@ input, select {
 
 .modal-location span {
   background: var(--bg);
+  border: 1px solid var(--border);
   padding: 6px 14px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
 }
 
 .modal-meta {
@@ -1279,8 +1293,9 @@ input, select {
 
 .modal-features li {
   background: var(--bg);
+  border: 1px solid var(--border);
   padding: 6px 14px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   color: var(--text-light);
 }
@@ -1486,6 +1501,7 @@ input, select {
 
   .featured-card.offset {
     transform: none;
+    margin-top: 0;
   }
 
   .featured-card.offset:hover {
