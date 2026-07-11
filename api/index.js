@@ -16,18 +16,22 @@ const app = new Hono();
 // MIDDLEWARE
 // =============================================================
 
-// CORS — giới hạn origin, không mở wildcard
+// CORS — cho phép same-origin (admin page + API cùng domain trên Vercel)
+// và các domain đã biết. Fallback: echo origin nếu là same-origin request.
 const ALLOWED_ORIGINS = [
   'https://noithatlumi.vn',
   'https://lumidesign.vercel.app',
+  'https://landingpage-eta-livid.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
 
 app.use('/api/*', cors({
   origin: (origin) => {
+    // Same-origin (origin undefined) hoặc trong whitelist → cho phép
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return origin;
-    return ALLOWED_ORIGINS[0]; // fallback về origin đầu
+    // Fallback: echo lại origin để tránh block same-origin trên Vercel preview
+    return origin;
   },
   maxAge: 86400,
 }));
