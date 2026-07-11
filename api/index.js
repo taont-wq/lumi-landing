@@ -911,6 +911,22 @@ app.post('/api/zalo/webhook', async (c) => {
 });
 
 // =============================================================
+// DEBUG (temporary)
+// =============================================================
+app.get('/api/debug-token', async (c) => {
+  const auth = c.req.header('Authorization');
+  if (!auth || !auth.startsWith('Bearer ')) return c.json({ error: 'no auth' }, 401);
+  const token = auth.slice(7);
+  const user = await verifyAdminToken(token);
+  return c.json({
+    hasSecret: !!process.env.ADMIN_SECRET,
+    secretLen: (process.env.ADMIN_SECRET || '').length,
+    tokenParts: token.split('.').length,
+    verifyResult: user,
+  });
+});
+
+// =============================================================
 // 404 CATCH-ALL
 // =============================================================
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
