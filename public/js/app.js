@@ -22,6 +22,7 @@ let currentPage = 1;
 let totalPages = 1;
 const PAGE_SIZE = 20;
 const towerCache = new Map(); // projectId → towers[]
+let currentModalImages = []; // ảnh hiện tại trong modal chi tiết
 
 // =============================================================
 // INIT
@@ -359,8 +360,6 @@ async function loadFeatured() {
 // =============================================================
 window.openUnitModal = async function(unitId) {
   if (!unitId) return;
-  // Chi tiết căn hộ — popup modal
-  // Code này được gọi từ onclick trong HTML
   try {
     const modal = document.getElementById('unit-modal');
     const overlay = document.getElementById('modal-overlay');
@@ -373,24 +372,46 @@ window.openUnitModal = async function(unitId) {
     if (overlay) overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Fetch unit detail — cần endpoint trả về chi tiết
-    // Tạm thời dùng search by code từ featured card (ID là đủ)
-    // Có thể dùng endpoint /api/units/:code
-    // Vì có ID, dùng API tìm
     const data = await apiFetch(`/units/${encodeURIComponent(unitId)}`);
 
     const projectName = data.project?.name || '';
     const towerName = data.tower?.name || '';
     const detailTitle = [escapeHtml(data.code), projectName, towerName].filter(Boolean).join(' — ');
 
+    const images = Array.isArray(data.images) ? data.images : [];
+    currentModalImages = images;
+    const mainImg = images[0] || '';
+    const videos = Array.isArray(data.videos) ? data.videos : [];
+
+    const videosHtml = videos.length ? `
+      <div class="modal-videos">
+        <h3>Video tham khảo</h3>
+        ${videos.map(v => {
+          if (v.type === 'youtube') {
+            const vid = v.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+            return vid ? `<iframe src="https://www.youtube.com/embed/${vid[1]}" loading="lazy" allowfullscreen></iframe>` : '';
+          }
+          if (v.type === 'vimeo') {
+            const vid = v.url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+            return vid ? `<iframe src="https://player.vimeo.com/video/${vid[1]}" loading="lazy" allowfullscreen></iframe>` : '';
+          }
+          if (v.type === 'tiktok') {
+            return `<blockquote class="tiktok-embed" cite="${escapeHtml(v.url)}"><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">Xem video TikTok</a></blockquote>`;
+          }
+          return `<a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="btn btn-outline">🎬 Xem video</a>`;
+        }).join('')}
+      </div>` : '';
+
     content.innerHTML = `
       <button class="modal-close" onclick="closeUnitModal()">&times;</button>
       <div class="modal-gallery">
-        ${(data.images || []).map(img =>
-          `<img src="${escapeHtml(img)}" alt="${escapeHtml(data.code)}" loading="lazy" />`
-        ).join('')}
+        <div class="modal-gallery-main">
+          ${mainImg ? `<img id="modal-main-img" src="${escapeHtml(mainImg)}" alt="${escapeHtml(data.code)}" />` : `<div class="modal-gallery-empty">${escapeHtml(data.code)}</div>`}
+        </div>
+        ${images.length > 1 ? `<div class="modal-gallery-thumbs">${images.map((img, i) => `<button class="modal-thumb ${i === 0 ? 'active' : ''}" onclick="setGalleryImage(${i})"><img src="${escapeHtml(img)}" alt=""></button>`).join('')}</div>` : ''}
       </div>
       <div class="modal-info">
+        <div class="modal-eyebrow">Căn hộ nội thất cao cấp</div>
         <h2>${detailTitle}</h2>
         ${(projectName || towerName) ? `
           <div class="modal-location">
@@ -399,10 +420,10 @@ window.openUnitModal = async function(unitId) {
           </div>
         ` : ''}
         <div class="modal-meta">
-          ${data.area ? `<span>Diện tích: <strong>${data.area}m²</strong></span>` : ''}
-          ${data.bedrooms ? `<span>Phòng ngủ: <strong>${data.bedrooms}PN</strong></span>` : ''}
-          ${data.floor ? `<span>Tầng: <strong>${escapeHtml(data.floor)}</strong></span>` : ''}
-          ${data.style ? `<span>Phong cách: <strong>${escapeHtml(data.style)}</strong></span>` : ''}
+          ${data.area ? `<span>Diện tích<strong>${data.area}m²</strong></span>` : ''}
+          ${data.bedrooms ? `<span>Phòng ngủ<strong>${data.bedrooms}PN</strong></span>` : ''}
+          ${data.floor ? `<span>Tầng<strong>${escapeHtml(data.floor)}</strong></span>` : ''}
+          ${data.style ? `<span>Phong cách<strong>${escapeHtml(data.style)}</strong></span>` : ''}
         </div>
         ${data.description ? `<p class="modal-desc">${escapeHtml(data.description)}</p>` : ''}
         ${data.features?.length ? `
@@ -412,34 +433,12 @@ window.openUnitModal = async function(unitId) {
           </div>
         ` : ''}
         ${data.floor_plan ? `
-          <a href="${escapeHtml(data.floor_plan)}" target="_blank" rel="noopener" class="btn btn-outline">
-            📄 Xem mặt bằng
-          </a>
+          <a href="${escapeHtml(data.floor_plan)}" target="_blank" rel="noopener" class="btn btn-outline">📄 Xem mặt bằng</a>
         ` : ''}
-        ${data.videos?.length ? `
-          <div class="modal-videos">
-            <h3>Video</h3>
-            ${data.videos.map(v => {
-              if (v.type === 'youtube') {
-                const vid = v.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-                return vid
-                  ? `<iframe src="https://www.youtube.com/embed/${vid[1]}" loading="lazy" allowfullscreen></iframe>`
-                  : '';
-              }
-              if (v.type === 'tiktok') {
-                return `<blockquote class="tiktok-embed" cite="${escapeHtml(v.url)}">...</blockquote>`;
-              }
-              return '';
-            }).join('')}
-          </div>
-        ` : ''}
+        ${videosHtml}
         <div class="modal-contact">
-          <a href="tel:${(window.contactPhone || '').replace(/\s/g, '')}" class="btn btn-primary">
-            📞 Gọi ngay
-          </a>
-          <a href="https://zalo.me/${(window.zaloOA || '')}" target="_blank" rel="noopener" class="btn btn-zalo">
-            💬 Chat Zalo
-          </a>
+          <a href="tel:${(window.contactPhone || '').replace(/\s/g, '')}" class="btn btn-primary">📞 Gọi ngay</a>
+          <a href="https://zalo.me/${(window.zaloOA || '')}" target="_blank" rel="noopener" class="btn btn-zalo">💬 Chat Zalo</a>
         </div>
       </div>
     `;
@@ -452,6 +451,14 @@ window.openUnitModal = async function(unitId) {
         <button class="btn" onclick="closeUnitModal()">Đóng</button>
       </div>`;
   }
+};
+
+window.setGalleryImage = function(index) {
+  const img = currentModalImages[index];
+  if (!img) return;
+  const main = document.getElementById('modal-main-img');
+  if (main) main.src = img;
+  document.querySelectorAll('.modal-thumb').forEach((t, i) => t.classList.toggle('active', i === index));
 };
 
 window.closeUnitModal = function() {

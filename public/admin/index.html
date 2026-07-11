@@ -133,6 +133,43 @@
       .table-wrapper { overflow-x: auto; }
       .admin-content { padding: 16px; }
     }
+
+    /* === SPLIT MODAL === */
+    .modal { max-width: 920px; }
+    .modal-sm { max-width: 420px; }
+    .modal-body-split { display: grid; grid-template-columns: 1fr 300px; gap: 28px; align-items: start; }
+    .form-col { min-width: 0; }
+    .preview-col { position: sticky; top: 90px; }
+
+    .upload-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+
+    /* === LIVE PREVIEW === */
+    .pv-eyebrow { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #C9A96E; margin-bottom: 12px; }
+    .pv-card { background: #FCFCFD; border: 1px solid #ECECF1; border-radius: 14px; overflow: hidden; }
+    .pv-image { position: relative; aspect-ratio: 4 / 3; background: #F0F0F4; }
+    .pv-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pv-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #B8B8C0; font-weight: 600; font-size: 1.1rem; }
+    .pv-badge { position: absolute; top: 10px; left: 10px; padding: 3px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; color: #fff; }
+    .pv-badge.published { background: #9A7B2E; }
+    .pv-badge.draft { background: #92400E; }
+    .pv-badge.hidden { background: #6B7280; }
+    .pv-badge.sold { background: #1E40AF; }
+    .pv-thumbs { display: flex; gap: 6px; padding: 10px 10px 0; overflow-x: auto; }
+    .pv-thumbs img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #ECECF1; flex-shrink: 0; }
+    .pv-body { padding: 14px 16px 18px; }
+    .pv-body h4 { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: #1A1A2E; margin-bottom: 8px; }
+    .pv-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .pv-meta span { background: #F3F0E8; color: #6B5836; padding: 4px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; }
+    .pv-desc { font-size: 0.82rem; color: #6B7280; line-height: 1.5; margin-bottom: 10px; max-height: 60px; overflow: hidden; }
+    .pv-features { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .pv-features span { background: #EEF2F7; color: #374151; padding: 3px 9px; border-radius: 9999px; font-size: 0.72rem; }
+    .pv-links { display: flex; gap: 8px; }
+    .pv-link { font-size: 0.75rem; color: #9A7B2E; font-weight: 600; }
+
+    @media (max-width: 760px) {
+      .modal-body-split { grid-template-columns: 1fr; }
+      .preview-col { position: static; }
+    }
   </style>
 </head>
 <body>
@@ -163,6 +200,7 @@
       <h1>Lumi<span>Admin</span></h1>
       <div class="admin-header-right">
         <span class="admin-user" id="admin-user-info"></span>
+        <button id="changepw-btn" class="btn-logout" style="background:rgba(201,169,110,0.18);color:#E5BA22">Đổi mật khẩu</button>
         <button id="logout-btn" class="btn-logout">Đăng xuất</button>
       </div>
     </header>
@@ -222,102 +260,151 @@
       <button class="modal-close" id="modal-close-btn">&times;</button>
     </div>
     <form id="unit-form">
-      <div class="modal-body">
+      <div class="modal-body modal-body-split">
+        <div class="form-col">
 
-        <div class="form-section">
-          <h3 class="form-section-title">Thông tin chính</h3>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="unit-code">Mã căn *</label>
-              <input type="text" id="unit-code" placeholder="VD: B4.0806" required>
+          <div class="form-section">
+            <h3 class="form-section-title">Thông tin chính</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="unit-code">Mã căn *</label>
+                <input type="text" id="unit-code" placeholder="VD: B4.0806" required>
+              </div>
+              <div class="form-group">
+                <label for="unit-status">Trạng thái hiển thị</label>
+                <select id="unit-status">
+                  <option value="draft">Nháp (chưa đăng)</option>
+                  <option value="published">Đã thi công (hiện trên web)</option>
+                  <option value="hidden">Ẩn</option>
+                  <option value="sold">Đang thi công</option>
+                </select>
+                <p class="form-hint">Chọn "Đã thi công" để căn hộ xuất hiện trên trang chủ.</p>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="unit-status">Trạng thái hiển thị</label>
-              <select id="unit-status">
-                <option value="draft">Nháp (chưa đăng)</option>
-                <option value="published">Đã thi công (hiện trên web)</option>
-                <option value="hidden">Ẩn</option>
-            <option value="sold">Đang thi công</option>
-              </select>
-              <p class="form-hint">Chọn "Đã thi công" để căn hộ xuất hiện trên trang chủ.</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="unit-project">Dự án</label>
+                <select id="unit-project"></select>
+              </div>
+              <div class="form-group">
+                <label for="unit-tower">Toà nhà</label>
+                <select id="unit-tower"></select>
+              </div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="unit-project">Dự án</label>
-              <select id="unit-project"></select>
-            </div>
-            <div class="form-group">
-              <label for="unit-tower">Toà nhà</label>
-              <select id="unit-tower"></select>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Thông số</h3>
+            <div class="form-row form-row-3">
+              <div class="form-group">
+                <label for="unit-area">Diện tích (m²)</label>
+                <input type="number" id="unit-area" placeholder="75" min="0" step="0.1">
+              </div>
+              <div class="form-group">
+                <label for="unit-bedrooms">Phòng ngủ</label>
+                <input type="number" id="unit-bedrooms" placeholder="2" min="0">
+              </div>
+              <div class="form-group">
+                <label for="unit-floor">Tầng</label>
+                <input type="text" id="unit-floor" placeholder="8">
+              </div>
             </div>
           </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Hình ảnh &amp; mô tả</h3>
+            <div class="form-group form-full">
+              <label for="unit-images">Hình ảnh</label>
+              <div class="upload-row">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('unit-images-file').click()">📤 Tải ảnh lên</button>
+                <span class="form-hint">Chọn nhiều ảnh (≤6MB). Hoặc dán URL mỗi dòng.</span>
+              </div>
+              <input type="file" id="unit-images-file" accept="image/*" multiple hidden>
+              <textarea id="unit-images" placeholder="https://res.cloudinary.com/.../img1.jpg&#10;https://res.cloudinary.com/.../img2.jpg"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="unit-floor-plan">PDF mặt bằng</label>
+                <div class="upload-row">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('unit-floorplan-file').click()">📤 Tải lên</button>
+                </div>
+                <input type="file" id="unit-floorplan-file" accept="application/pdf" hidden>
+                <input type="url" id="unit-floor-plan" placeholder="https://res.cloudinary.com/.../floor-plan.pdf">
+              </div>
+              <div class="form-group">
+                <label for="unit-style">Phong cách</label>
+                <input type="text" id="unit-style" placeholder="Hiện đại, Tân cổ điển...">
+              </div>
+            </div>
+            <div class="form-group form-full">
+              <label for="unit-videos">Video (link embed, mỗi dòng 1 link)</label>
+              <textarea id="unit-videos" placeholder="https://youtube.com/watch?v=...&#10;https://vimeo.com/..."></textarea>
+              <p class="form-hint">Hỗ trợ YouTube, Vimeo, TikTok.</p>
+            </div>
+            <div class="form-group form-full">
+              <label for="unit-desc">Mô tả</label>
+              <textarea id="unit-desc" placeholder="Mô tả căn hộ..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Tuỳ chọn</h3>
+            <div class="form-group form-full">
+              <label for="unit-features">Features (mỗi feature một dòng)</label>
+              <textarea id="unit-features" placeholder="Hồ bơi&#10;Công viên&#10;Bãi đỗ xe"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="unit-sort-order">Thứ tự</label>
+                <input type="number" id="unit-sort-order" placeholder="0" min="0">
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:10px">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="unit-featured">
+                  <span>Hiển thị trong mục căn hộ nổi bật</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        <div class="form-section">
-          <h3 class="form-section-title">Thông số</h3>
-          <div class="form-row form-row-3">
-            <div class="form-group">
-              <label for="unit-area">Diện tích (m²)</label>
-              <input type="number" id="unit-area" placeholder="75" min="0" step="0.1">
-            </div>
-            <div class="form-group">
-              <label for="unit-bedrooms">Phòng ngủ</label>
-              <input type="number" id="unit-bedrooms" placeholder="2" min="0">
-            </div>
-            <div class="form-group">
-              <label for="unit-floor">Tầng</label>
-              <input type="text" id="unit-floor" placeholder="8">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h3 class="form-section-title">Hình ảnh &amp; mô tả</h3>
-          <div class="form-group form-full">
-            <label for="unit-images">Hình ảnh (Cloudinary URLs, mỗi URL một dòng)</label>
-            <textarea id="unit-images" placeholder="https://res.cloudinary.com/.../img1.jpg&#10;https://res.cloudinary.com/.../img2.jpg"></textarea>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="unit-floor-plan">PDF mặt bằng (URL)</label>
-              <input type="url" id="unit-floor-plan" placeholder="https://res.cloudinary.com/.../floor-plan.pdf">
-            </div>
-            <div class="form-group">
-              <label for="unit-style">Phong cách</label>
-              <input type="text" id="unit-style" placeholder="Hiện đại, Tân cổ điển...">
-            </div>
-          </div>
-          <div class="form-group form-full">
-            <label for="unit-desc">Mô tả</label>
-            <textarea id="unit-desc" placeholder="Mô tả căn hộ..."></textarea>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h3 class="form-section-title">Tuỳ chọn</h3>
-          <div class="form-group form-full">
-            <label for="unit-features">Features (mỗi feature một dòng)</label>
-            <textarea id="unit-features" placeholder="Hồ bơi&#10;Công viên&#10;Bãi đỗ xe"></textarea>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="unit-sort-order">Thứ tự</label>
-              <input type="number" id="unit-sort-order" placeholder="0" min="0">
-            </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:10px">
-              <label class="checkbox-label">
-                <input type="checkbox" id="unit-featured">
-                <span>Hiển thị trong mục căn hộ nổi bật</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
+        <aside class="preview-col">
+          <div id="unit-preview"></div>
+        </aside>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Huỷ</button>
         <button type="submit" class="btn btn-primary" id="modal-save-btn">Lưu</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- CHANGE PASSWORD MODAL -->
+  <div id="changepw-overlay" class="modal-overlay"></div>
+  <div id="changepw-modal" class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Đổi mật khẩu</h2>
+      <button class="modal-close" id="changepw-close-btn">&times;</button>
+    </div>
+    <form id="changepw-form">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="changepw-current">Mật khẩu hiện tại</label>
+          <input type="password" id="changepw-current" autocomplete="current-password" required>
+        </div>
+        <div class="form-group">
+          <label for="changepw-new">Mật khẩu mới</label>
+          <input type="password" id="changepw-new" autocomplete="new-password" required>
+        </div>
+        <div class="form-group">
+          <label for="changepw-confirm">Xác nhận mật khẩu mới</label>
+          <input type="password" id="changepw-confirm" autocomplete="new-password" required>
+        </div>
+        <div id="changepw-error" class="error-msg"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="changepw-cancel-btn">Huỷ</button>
+        <button type="submit" class="btn btn-primary" id="changepw-save-btn">Đổi mật khẩu</button>
       </div>
     </form>
   </div>

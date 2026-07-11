@@ -10,7 +10,7 @@ const API = window.location.hostname === 'localhost' || window.location.hostname
 // Lưu ý: nếu dev với static server riêng, set API = 'http://localhost:3000/api'
 
 // State
-let token = sessionStorage.getItem('lumi_admin_token') || '';
+let token = localStorage.getItem('lumi_admin_token') || '';
 let currentUser = null;
 let currentPage = 1;
 let currentFilter = '';
@@ -41,6 +41,17 @@ function bindEvents() {
   document.getElementById('modal-cancel-btn')?.addEventListener('click', closeForm);
   document.getElementById('unit-form')?.addEventListener('submit', onSaveUnit);
   document.getElementById('unit-project')?.addEventListener('change', onProjectChange);
+
+  // Live preview + upload + change-password
+  document.getElementById('unit-form')?.addEventListener('input', updatePreview);
+  document.getElementById('unit-form')?.addEventListener('change', updatePreview);
+  document.getElementById('unit-images-file')?.addEventListener('change', onImagesUpload);
+  document.getElementById('unit-floorplan-file')?.addEventListener('change', onFloorPlanUpload);
+  document.getElementById('changepw-btn')?.addEventListener('click', openChangePw);
+  document.getElementById('changepw-close-btn')?.addEventListener('click', closeChangePw);
+  document.getElementById('changepw-overlay')?.addEventListener('click', closeChangePw);
+  document.getElementById('changepw-cancel-btn')?.addEventListener('click', closeChangePw);
+  document.getElementById('changepw-form')?.addEventListener('submit', onSaveChangePw);
 }
 
 // =============================================================
@@ -77,7 +88,7 @@ async function onLogin(e) {
 
     token = data.token;
     currentUser = data.user;
-    sessionStorage.setItem('lumi_admin_token', token);
+    localStorage.setItem('lumi_admin_token', token);
     showApp();
     loadUnits();
     loadProjectSelect();
@@ -94,7 +105,7 @@ async function onLogin(e) {
 function onLogout() {
   token = '';
   currentUser = null;
-  sessionStorage.removeItem('lumi_admin_token');
+  localStorage.removeItem('lumi_admin_token');
   showLogin();
 }
 
@@ -338,6 +349,7 @@ function openForm(unitData = null) {
     document.getElementById('unit-sort-order').value = unitData.sort_order || '';
     document.getElementById('unit-features').value = (unitData.features || []).join('\n');
     document.getElementById('unit-featured').checked = unitData.is_featured === true;
+    document.getElementById('unit-videos').value = (unitData.videos || []).map(v => v.url).join('\n');
 
     // Load và select project/tower
     if (unitData.project_id) {
@@ -356,6 +368,7 @@ function openForm(unitData = null) {
     document.getElementById('unit-tower').innerHTML = '<option value="">Chọn dự án trước</option>';
     document.getElementById('unit-tower').disabled = true;
   }
+  updatePreview();
 }
 
 window.editUnit = async function(id) {
@@ -407,6 +420,7 @@ async function onSaveUnit(e) {
     floor_plan: document.getElementById('unit-floor-plan').value.trim(),
     sort_order: parseInt(document.getElementById('unit-sort-order').value) || 0,
     features: document.getElementById('unit-features').value.split('\n').map(s => s.trim()).filter(Boolean),
+    videos: parseVideos(document.getElementById('unit-videos').value),
     is_featured: document.getElementById('unit-featured').checked,
   };
 
@@ -475,6 +489,158 @@ window.toggleFeatured = async function(id, newValue) {
     showToast(err.message || 'Thao tác thất bại', 'error');
   }
 };
+
+// =============================================================
+// CHANGE PASSWORD
+// =============================================================
+function openChangePw() {
+  document.getElementById('changepw-form').reset();
+  document.getElementById('changepw-error').classList.remove('visible');
+  document.getElementById('changepw-modal').classList.add('active');
+  document.getElementById('changepw-overlay').classList.add('active');
+}
+
+function closeChangePw() {
+  document.getElementById('changepw-modal').classList.remove('active');
+  document.getElementById('changepw-overlay').classList.remove('active');
+}
+
+async function onSaveChangePw(e) {
+  e.preventDefault();
+  const btn = document.getElementById('changepw-save-btn');
+  const err = document.getElementById('changepw-error');
+  err.classList.remove('visible');
+
+  const cur = document.getElementById('changepw-current').value;
+  const neu = document.getElementById('changepw-new').value;
+  const confirm = document.getElementById('changepw-confirm').value;
+
+  if (!cur || !neu) { showError(err, 'Vui lòng nhập đầy đủ'); return; }
+  if (neu.length < 6) { showError(err, 'Mật khẩu mới ít nhất 6 ký tự'); return; }
+  if (neu !== confirm) { showError(err, 'Mật khẩu xác nhận không khớp'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Đang lưu...';
+  try {
+    const res = await fetch(`${API}/admin/change-password`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ current_password: cur, new_password: neu }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(err, data.error || 'Thất bại'); return; }
+    showToast('Đổi mật khẩu thành công', 'success');
+    closeChangePw();
+  } catch {
+    showError(err, 'Không thể kết nối đến máy chủ');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Đổi mật khẩu';
+  }
+}
+
+// =============================================================
+// UPLOAD (ảnh / PDF) → Supabase Storage qua API
+// =============================================================
+async function uploadFiles(files, folder, onDone) {
+  const fd = new FormData();
+  files.forEach(f => fd.append('file', f));
+  fd.append('folder', folder);
+  try {
+    const res = await fetch(`${API}/admin/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Upload thất bại', 'error'); return; }
+    onDone(data.urls || []);
+    showToast('Upload thành công', 'success');
+  } catch (err) {
+    console.error('Upload error:', err);
+    showToast('Upload thất bại', 'error');
+  }
+}
+
+async function onImagesUpload(e) {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  await uploadFiles(files, 'images', (urls) => {
+    const ta = document.getElementById('unit-images');
+    const existing = ta.value.trim() ? ta.value.trim().split('\n') : [];
+    ta.value = [...existing, ...urls].join('\n');
+    updatePreview();
+  });
+  e.target.value = '';
+}
+
+async function onFloorPlanUpload(e) {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  await uploadFiles(files, 'floorplans', (urls) => {
+    if (urls[0]) {
+      document.getElementById('unit-floor-plan').value = urls[0];
+      updatePreview();
+    }
+  });
+  e.target.value = '';
+}
+
+// =============================================================
+// LIVE PREVIEW
+// =============================================================
+function updatePreview() {
+  const el = document.getElementById('unit-preview');
+  if (!el) return;
+
+  const code = document.getElementById('unit-code').value.trim();
+  const status = document.getElementById('unit-status').value;
+  const images = document.getElementById('unit-images').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const area = document.getElementById('unit-area').value.trim();
+  const bedrooms = document.getElementById('unit-bedrooms').value.trim();
+  const floor = document.getElementById('unit-floor').value.trim();
+  const style = document.getElementById('unit-style').value.trim();
+  const desc = document.getElementById('unit-desc').value.trim();
+  const features = document.getElementById('unit-features').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const floorPlan = document.getElementById('unit-floor-plan').value.trim();
+  const videos = parseVideos(document.getElementById('unit-videos').value);
+
+  const mainImg = images[0] || '';
+  const thumbs = images.slice(0, 6).map(src => `<img src="${esc(src)}" alt="">`).join('');
+  const meta = [area ? `${area}m²` : '', bedrooms ? `${bedrooms} PN` : '', floor ? `Tầng ${esc(floor)}` : '', style ? esc(style) : '']
+    .filter(Boolean).map(m => `<span>${m}</span>`).join('');
+
+  el.innerHTML = `
+    <div class="pv-eyebrow">Xem trước</div>
+    <div class="pv-card">
+      <div class="pv-image">
+        ${mainImg ? `<img src="${esc(mainImg)}" alt="${esc(code)}">` : `<div class="pv-placeholder">${esc(code) || 'Căn hộ'}</div>`}
+        <span class="pv-badge ${esc(status)}">${statusLabel(status)}</span>
+      </div>
+      ${thumbs ? `<div class="pv-thumbs">${thumbs}</div>` : ''}
+      <div class="pv-body">
+        <h4>${esc(code) || 'Mã căn'}</h4>
+        ${meta ? `<div class="pv-meta">${meta}</div>` : ''}
+        ${desc ? `<p class="pv-desc">${esc(desc)}</p>` : ''}
+        ${features.length ? `<div class="pv-features">${features.map(f => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
+        <div class="pv-links">
+          ${floorPlan ? `<span class="pv-link">📄 Mặt bằng</span>` : ''}
+          ${videos.length ? `<span class="pv-link">🎬 ${videos.length} video</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function parseVideos(text) {
+  return text.split('\n').map(s => s.trim()).filter(Boolean).map(url => ({ type: videoType(url), url }));
+}
+
+function videoType(url) {
+  if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube';
+  if (/vimeo\.com/i.test(url)) return 'vimeo';
+  if (/tiktok\.com/i.test(url)) return 'tiktok';
+  return 'other';
+}
 
 // =============================================================
 // HELPERS

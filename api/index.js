@@ -438,6 +438,124 @@ async function hashPassword(plainText) {
 }
 
 // =============================================================
+// CHANGE PASSWORD — admin đổi mật khẩu
+// =============================================================
+app.patch('/api/admin/change-password', async (c) => {
+  try {
+    const authError = await requireAdmin(c);
+    if (authError) return c.json({ error: 'Unauthorized' }, 401);
+    if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
+
+    const { current_password, new_password } = await c.req.json();
+    if (!current_password || !new_password) {
+      return c.json({ error: 'Vui lòng nhập đầy đủ mật khẩu' }, 400);
+    }
+    if (String(new_password).length < 6) {
+      return c.json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự' }, 400);
+    }
+
+    const auth = c.req.header('Authorization');
+    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : '';
+    const decoded = await verifyAdminToken(token);
+    if (!decoded) return c.json({ error: 'Token không hợp lệ' }, 401);
+
+    const userRes = await sbAdmin(`admin_users?select=id,password_hash&id=eq.${decoded.userId}&limit=1`);
+    if (!userRes.ok) return c.json({ error: 'Không tìm thấy người dùng' }, 502);
+    const users = await userRes.json();
+    if (!users.length) return c.json({ error: 'Không tìm thấy người dùng' }, 404);
+
+    const user = users[0];
+    const match = await verifyPassword(current_password, user.password_hash);
+    if (!match) return c.json({ error: 'Mật khẩu hiện tại không đúng' }, 401);
+
+    const newHash = await hashPassword(new_password);
+    const updateRes = await sbAdmin(`admin_users?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ password_hash: newHash }),
+    });
+    if (!updateRes.ok) return c.json({ error: 'Cập nhật thất bại' }, 502);
+
+    logAudit('admin.change_password', `user:${user.id}`, user.id, {}, c.req.header('x-forwarded-for') || '');
+    return c.json({ success: true });
+  } catch (err) {
+    console.error('PATCH /api/admin/change-password error:', err.message);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// =============================================================
+// UPLOAD — admin upload ảnh / PDF lên Supabase Storage
+// =============================================================
+async function ensureBucket(bucket) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: bucket, name: bucket, public: true }),
+    });
+    return res.status === 200 || res.status === 409;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function uploadToStorage(bucket, path, buffer, contentType) {
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': contentType,
+      'x-upsert': 'true',
+    },
+    body: buffer,
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Upload failed (${res.status}): ${txt}`);
+  }
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+}
+
+app.post('/api/admin/upload', async (c) => {
+  try {
+    const authError = await requireAdmin(c);
+    if (authError) return c.json({ error: 'Unauthorized' }, 401);
+    if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
+
+    const form = await c.req.parseBody({ all: true });
+    const folder = (form['folder'] || 'images').toString().replace(/[^a-z0-9_-]/gi, '') || 'images';
+    let files = form['file'];
+    if (!files) return c.json({ error: 'Không có file được chọn' }, 400);
+    if (!Array.isArray(files)) files = [files];
+
+    await ensureBucket('lumi-uploads');
+
+    const urls = [];
+    for (const file of files) {
+      if (file.size > 6 * 1024 * 1024) {
+        return c.json({ error: `File ${file.name} vượt quá 6MB` }, 413);
+      }
+      const buf = await file.arrayBuffer();
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const path = `${folder}/${safeName}`;
+      const url = await uploadToStorage('lumi-uploads', path, buf, file.type || 'application/octet-stream');
+      urls.push(url);
+    }
+    return c.json({ urls });
+  } catch (err) {
+    console.error('POST /api/admin/upload error:', err.message);
+    return c.json({ error: err.message || 'Upload thất bại' }, 500);
+  }
+});
+
+// =============================================================
 // ADMIN API ROUTES (yêu cầu Bearer token)
 // =============================================================
 
