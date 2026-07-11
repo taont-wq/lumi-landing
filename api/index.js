@@ -228,6 +228,21 @@ app.get('/api/config', (c) => {
   });
 });
 
+// DEBUG (temporary)
+app.get('/api/debug-auth', (c) => {
+  const hasSecret = !!process.env.ADMIN_SECRET;
+  const secretLen = process.env.ADMIN_SECRET ? process.env.ADMIN_SECRET.length : 0;
+  let cryptoWorks = false;
+  try {
+    const { createHmac } = require('node:crypto');
+    const sig = createHmac('sha256', process.env.ADMIN_SECRET || 'x').update('test').digest('base64url');
+    cryptoWorks = !!sig;
+  } catch (e) {
+    cryptoWorks = 'error: ' + e.message;
+  }
+  return c.json({ hasSecret, secretLen, cryptoWorks, nodeVersion: process.version });
+});
+
 /**
  * GET /api/projects — danh sách dự án (active)
  */
