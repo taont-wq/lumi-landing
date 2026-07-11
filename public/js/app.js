@@ -26,7 +26,7 @@ let currentModalImages = []; // ảnh hiện tại trong modal chi tiết
 
 // Inline SVG icons (thin-stroke, Heroicons-outline style)
 const ICON = {
-  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18M18.75 3v18M9 6.75h1.5M9 12h1.5M9 17.25h1.5M13.5 6.75h1.5M13.5 12h1.5M13.5 17.25h1.5"/></svg>',
   tower: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 21h16.5M6 21V5a1 1 0 011-1h10a1 1 0 011 1v16M9 8.25h.008M15 8.25h.008M9 12h.008M15 12h.008M9 15.75h.008M15 15.75h.008"/></svg>',
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106a1.125 1.125 0 00-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-3.94-3.94c-.162-.441-.004-.928.38-1.21l1.293-.97a1.125 1.125 0 00.417-1.173L8.25 3.102a1.125 1.125 0 00-1.091-.852H5.25A2.25 2.25 0 003 4.5v2.25z"/></svg>',
@@ -209,7 +209,7 @@ async function loadUnits(towerId, projectId, requestId, search) {
   showUnitsSection(true);
 
   if (unitGrid) {
-    unitGrid.innerHTML = '<div class="loading-spinner"></div>';
+    unitGrid.innerHTML = renderSkeletons(6);
   }
 
   const params = new URLSearchParams();
@@ -271,6 +271,26 @@ function showUnitsSection(show) {
   const section = document.getElementById('units-section');
   if (!section) return;
   section.style.display = show ? 'block' : 'none';
+}
+
+// =============================================================
+// SKELETON LOADERS
+// =============================================================
+function renderSkeletons(count) {
+  const cards = [];
+  for (let i = 0; i < count; i++) {
+    cards.push(`
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton skeleton-img"></div>
+        <div class="skeleton-body">
+          <div class="skeleton skeleton-line w-60"></div>
+          <div class="skeleton skeleton-line w-80"></div>
+          <div class="skeleton skeleton-line w-40"></div>
+        </div>
+      </div>
+    `);
+  }
+  return cards.join('');
 }
 
 // =============================================================
@@ -343,12 +363,14 @@ function appendUnits(units) {
 async function loadFeatured() {
   if (!featuredGrid) return;
 
+  featuredGrid.innerHTML = renderSkeletons(4);
+
   try {
     const units = await apiFetch('/featured');
     if (!units?.length) return;
 
-    featuredGrid.innerHTML = units.slice(0, 6).map(unit => `
-      <div class="featured-card" onclick="openUnitModal('${escapeHtml(unit.id)}')">
+    featuredGrid.innerHTML = units.slice(0, 6).map((unit, i) => `
+      <div class="featured-card${i % 2 === 1 ? ' offset' : ''}" onclick="openUnitModal('${escapeHtml(unit.id)}')">
         <div class="featured-card-image">
           ${unit.images?.[0]
             ? `<img src="${escapeHtml(unit.images[0])}" alt="${escapeHtml(unit.code)}" loading="lazy" />`

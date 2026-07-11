@@ -14,10 +14,16 @@
   <meta property="og:url" content="https://lumidesign.vercel.app/">
   <meta property="og:image" content="https://noithatlumi.vn/wp-content/uploads/2025/09/logo-Lumi-05-1-scaled.png">
 
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lumi Design — Nội thất căn hộ cao cấp">
+  <meta name="twitter:description" content="Tra cứu căn hộ nội thất cao cấp tại các dự án hàng đầu. Nâng tầm cuộc sống.">
+  <meta name="twitter:image" content="https://noithatlumi.vn/wp-content/uploads/2025/09/logo-Lumi-05-1-scaled.png">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- Styles -->
   <link rel="stylesheet" href="/css/style.css">
@@ -26,6 +32,8 @@
   <link id="favicon" rel="icon" type="image/png" href="https://noithatlumi.vn/wp-content/uploads/2025/09/logo-Lumi-05-1-scaled.png">
 </head>
 <body>
+
+  <a class="skip-link" href="#main">Đến nội dung chính</a>
 
   <!-- ==================== HEADER ==================== -->
   <header class="header">
@@ -43,28 +51,40 @@
     </div>
   </header>
 
+  <main id="main">
+
   <!-- ==================== HERO + FILTER ==================== -->
   <section class="hero">
-    <h1 class="hero-title">Tra cứu căn hộ cao cấp</h1>
-    <p class="hero-subtitle">Dễ dàng tìm kiếm căn hộ ưng ý tại các dự án hàng đầu</p>
+    <div class="hero-inner">
+      <div class="hero-main">
+        <h1 class="hero-title">Tra cứu căn hộ cao cấp</h1>
+        <p class="hero-subtitle">Dễ dàng tìm kiếm căn hộ ưng ý tại các dự án hàng đầu</p>
 
-    <div class="filter-group">
-      <div class="filter-search">
-        <svg class="filter-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input type="text" id="search-input" placeholder="Tìm mã căn (VD: B4.0806)" autocomplete="off">
+        <div class="filter-group">
+          <div class="filter-search">
+            <svg class="filter-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Tìm mã căn (VD: B4.0806)" autocomplete="off">
+          </div>
+
+          <div class="filter-selects">
+            <select id="project-select" class="filter-select" aria-label="Chọn dự án">
+              <option value="">Đang tải dự án...</option>
+            </select>
+
+            <select id="tower-select" class="filter-select" aria-label="Chọn toà" disabled>
+              <option value="">Chọn dự án trước</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div class="filter-selects">
-        <select id="project-select" class="filter-select" aria-label="Chọn dự án">
-          <option value="">Đang tải dự án...</option>
-        </select>
-
-        <select id="tower-select" class="filter-select" aria-label="Chọn toà" disabled>
-          <option value="">Chọn dự án trước</option>
-        </select>
-      </div>
+      <aside class="hero-aside" aria-hidden="true">
+        <span class="hero-aside-rule"></span>
+        <p class="hero-aside-quote">Nâng tầm<br><em>cuộc sống</em></p>
+        <span class="hero-aside-meta">Nội thất căn hộ cao cấp · 058 929 4444</span>
+      </aside>
     </div>
   </section>
 
@@ -118,6 +138,8 @@
     </div>
   </section>
 
+  </main>
+
   <!-- ==================== FOOTER ==================== -->
   <footer class="footer">
     <div class="footer-inner">
@@ -144,6 +166,10 @@
         <a href="mailto:info@lumidesign.vn">info@lumidesign.vn</a>
         <a href="https://noithatlumi.vn" target="_blank" rel="noopener">noithatlumi.vn</a>
       </div>
+      <nav class="footer-legal" aria-label="Chính sách">
+        <a href="/privacy.html">Chính sách bảo mật</a>
+        <a href="/terms.html">Điều khoản dịch vụ</a>
+      </nav>
       <p class="footer-copy">&copy; <span id="footer-year">2024</span> Lumi Design. All rights reserved.</p>
     </div>
   </footer>
