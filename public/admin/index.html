@@ -100,6 +100,13 @@
     .form-group textarea:focus { outline: none; border-color: #C9A96E; }
     .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.875rem; background: white; }
 
+    .form-section { margin-bottom: 24px; }
+    .form-section:last-child { margin-bottom: 0; }
+    .form-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #9CA3AF; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #F3F4F6; }
+    .form-hint { font-size: 0.75rem; color: #9CA3AF; margin-top: 6px; line-height: 1.4; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.875rem; color: #374151; }
+    .checkbox-label input { width: 18px; height: 18px; accent-color: #C9A96E; }
+
     .loading { text-align: center; padding: 60px; color: #9CA3AF; }
     .loading::after { content: ''; display: inline-block; width: 24px; height: 24px; border: 3px solid #E5E7EB; border-top-color: #C9A96E; border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -208,77 +215,97 @@
     </div>
     <form id="unit-form">
       <div class="modal-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="unit-code">Mã căn *</label>
-            <input type="text" id="unit-code" placeholder="VD: B4.0806" required>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Thông tin chính</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="unit-code">Mã căn *</label>
+              <input type="text" id="unit-code" placeholder="VD: B4.0806" required>
+            </div>
+            <div class="form-group">
+              <label for="unit-status">Trạng thái hiển thị</label>
+              <select id="unit-status">
+                <option value="draft">Nháp (chưa đăng)</option>
+                <option value="published">Đang bán (hiện trên web)</option>
+                <option value="hidden">Ẩn</option>
+                <option value="sold">Đã bán</option>
+              </select>
+              <p class="form-hint">Chọn "Đang bán" để căn hộ xuất hiện trên trang chủ.</p>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="unit-status">Trạng thái</label>
-            <select id="unit-status">
-              <option value="draft">Nháp</option>
-              <option value="published">Đang bán</option>
-              <option value="hidden">Ẩn</option>
-              <option value="sold">Đã bán</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="unit-project">Dự án</label>
-            <select id="unit-project"></select>
-          </div>
-          <div class="form-group">
-            <label for="unit-tower">Toà nhà</label>
-            <select id="unit-tower"></select>
-          </div>
-        </div>
-        <div class="form-row form-row-3">
-          <div class="form-group">
-            <label for="unit-area">Diện tích (m²)</label>
-            <input type="number" id="unit-area" placeholder="75" min="0" step="0.1">
-          </div>
-          <div class="form-group">
-            <label for="unit-bedrooms">Phòng ngủ</label>
-            <input type="number" id="unit-bedrooms" placeholder="2" min="0">
-          </div>
-          <div class="form-group">
-            <label for="unit-floor">Tầng</label>
-            <input type="text" id="unit-floor" placeholder="8">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="unit-project">Dự án</label>
+              <select id="unit-project"></select>
+            </div>
+            <div class="form-group">
+              <label for="unit-tower">Toà nhà</label>
+              <select id="unit-tower"></select>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label for="unit-style">Phong cách</label>
-          <input type="text" id="unit-style" placeholder="Hiện đại, Tân cổ điển...">
-        </div>
-        <div class="form-group form-full">
-          <label for="unit-desc">Mô tả</label>
-          <textarea id="unit-desc" placeholder="Mô tả căn hộ..."></textarea>
-        </div>
-        <div class="form-group form-full">
-          <label>Hình ảnh (Cloudinary URLs, mỗi URL một dòng)</label>
-          <textarea id="unit-images" placeholder="https://res.cloudinary.com/.../img1.jpg&#10;https://res.cloudinary.com/.../img2.jpg"></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="unit-floor-plan">PDF mặt bằng (URL)</label>
-            <input type="url" id="unit-floor-plan" placeholder="https://res.cloudinary.com/.../floor-plan.pdf">
-          </div>
-          <div class="form-group">
-            <label for="unit-sort-order">Thứ tự</label>
-            <input type="number" id="unit-sort-order" placeholder="0" min="0">
+
+        <div class="form-section">
+          <h3 class="form-section-title">Thông số</h3>
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label for="unit-area">Diện tích (m²)</label>
+              <input type="number" id="unit-area" placeholder="75" min="0" step="0.1">
+            </div>
+            <div class="form-group">
+              <label for="unit-bedrooms">Phòng ngủ</label>
+              <input type="number" id="unit-bedrooms" placeholder="2" min="0">
+            </div>
+            <div class="form-group">
+              <label for="unit-floor">Tầng</label>
+              <input type="text" id="unit-floor" placeholder="8">
+            </div>
           </div>
         </div>
-        <div class="form-group form-full">
-          <label>Features (mỗi feature một dòng)</label>
-          <textarea id="unit-features" placeholder="Hồ bơi&#10;Công viên&#10;Bãi đỗ xe"></textarea>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Hình ảnh &amp; mô tả</h3>
+          <div class="form-group form-full">
+            <label for="unit-images">Hình ảnh (Cloudinary URLs, mỗi URL một dòng)</label>
+            <textarea id="unit-images" placeholder="https://res.cloudinary.com/.../img1.jpg&#10;https://res.cloudinary.com/.../img2.jpg"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="unit-floor-plan">PDF mặt bằng (URL)</label>
+              <input type="url" id="unit-floor-plan" placeholder="https://res.cloudinary.com/.../floor-plan.pdf">
+            </div>
+            <div class="form-group">
+              <label for="unit-style">Phong cách</label>
+              <input type="text" id="unit-style" placeholder="Hiện đại, Tân cổ điển...">
+            </div>
+          </div>
+          <div class="form-group form-full">
+            <label for="unit-desc">Mô tả</label>
+            <textarea id="unit-desc" placeholder="Mô tả căn hộ..."></textarea>
+          </div>
         </div>
-        <div class="form-group">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="unit-featured" style="width:18px;height:18px">
-            <span>Hiển thị trong mục căn hộ nổi bật</span>
-          </label>
+
+        <div class="form-section">
+          <h3 class="form-section-title">Tuỳ chọn</h3>
+          <div class="form-group form-full">
+            <label for="unit-features">Features (mỗi feature một dòng)</label>
+            <textarea id="unit-features" placeholder="Hồ bơi&#10;Công viên&#10;Bãi đỗ xe"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="unit-sort-order">Thứ tự</label>
+              <input type="number" id="unit-sort-order" placeholder="0" min="0">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:10px">
+              <label class="checkbox-label">
+                <input type="checkbox" id="unit-featured">
+                <span>Hiển thị trong mục căn hộ nổi bật</span>
+              </label>
+            </div>
+          </div>
         </div>
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Huỷ</button>
