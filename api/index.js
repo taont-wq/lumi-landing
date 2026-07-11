@@ -269,6 +269,26 @@ app.get('/api/debug-auth', async (c) => {
   return c.json({ hasSecret, secretLen, nodeCryptoWorks, webCryptoWorks, nodeVersion: process.version, hasGlobalCrypto: typeof crypto !== 'undefined', tokenTest });
 });
 
+// DEBUG: test actual login + verify
+app.post('/api/debug-login', async (c) => {
+  try {
+    const { email, password } = await c.req.json();
+    // Hardcode test: create token like login does
+    const fakeUser = { id: 'test-id-123', role: 'admin' };
+    const token = await createAdminToken(fakeUser.id, fakeUser.role);
+    const verified = await verifyAdminToken(token);
+    return c.json({
+      tokenCreated: !!token,
+      tokenSample: token ? token.substring(0, 30) + '...' : null,
+      verified,
+      verifyAdminTokenType: typeof verifyAdminToken,
+      createAdminTokenType: typeof createAdminToken,
+    });
+  } catch (e) {
+    return c.json({ error: e.message, stack: e.stack });
+  }
+});
+
 /**
  * GET /api/projects — danh sách dự án (active)
  */
