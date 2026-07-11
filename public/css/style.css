@@ -435,7 +435,7 @@ input, select {
 
 .unit-card-badge.published { background: var(--gold); color: var(--black); }
 .unit-card-badge.draft { background: var(--warning); color: white; }
-.unit-card-badge.sold { background: var(--danger); color: white; }
+  .unit-card-badge.sold { background: #E3EEFD; color: #1E40AF; }
 .unit-card-badge.hidden { background: var(--text-muted); color: white; }
 
 .unit-card-body {

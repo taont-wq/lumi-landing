@@ -480,7 +480,7 @@ window.toggleFeatured = async function(id, newValue) {
 // HELPERS
 // =============================================================
 function statusLabel(status) {
-  const labels = { published: 'Đang bán', draft: 'Nháp', hidden: 'Ẩn', sold: 'Đã bán' };
+  const labels = { published: 'Đã thi công', draft: 'Nháp', hidden: 'Ẩn', sold: 'Đang thi công' };
   return labels[status] || status;
 }
 

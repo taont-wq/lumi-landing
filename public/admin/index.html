@@ -6,7 +6,7 @@
   <title>Lumi Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background: #F3F4F6; color: #1F2937; min-height: 100vh; }
@@ -17,13 +17,15 @@
     .login-card h1 { font-size: 1.5rem; margin-bottom: 4px; }
     .login-card p { color: #6B7280; font-size: 0.875rem; margin-bottom: 24px; }
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 6px; color: #374151; }
-    .form-group input { width: 100%; padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9375rem; transition: border-color 0.2s; }
-    .form-group input:focus { outline: none; border-color: #C9A96E; box-shadow: 0 0 0 3px rgba(201,169,110,0.15); }
+    .form-group label { display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 7px; color: #4B5563; }
+    .form-group input { width: 100%; padding: 11px 14px; border: 1px solid #E2E2E8; border-radius: 10px; font-size: 0.9375rem; font-family: inherit; color: #1F2937; background: #FCFCFD; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+    .form-group input:hover { border-color: #C9A96E; }
+    .form-group input:focus { outline: none; border-color: #C9A96E; background: #fff; box-shadow: 0 0 0 4px rgba(201,169,110,0.12); }
 
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; border: none; transition: 0.2s; }
-    .btn-primary { background: #C9A96E; color: #1A1A2E; }
-    .btn-primary:hover { background: #B8944F; }
+    .btn-primary { background: linear-gradient(180deg, #D4B67E, #C9A96E); color: #1A1A2E; box-shadow: 0 2px 8px rgba(201,169,110,0.3); transition: 0.2s; }
+    .btn-primary:hover { background: linear-gradient(180deg, #C9A96E, #B8944F); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(201,169,110,0.4); }
+    .btn-primary:active { transform: translateY(0); }
     .btn-danger { background: #EF4444; color: white; }
     .btn-danger:hover { background: #DC2626; }
     .btn-secondary { background: #E5E7EB; color: #374151; }
@@ -64,10 +66,10 @@
     td { padding: 12px 16px; font-size: 0.875rem; border-bottom: 1px solid #F3F4F6; }
 
     .status-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-    .status-published { background: #D1FAE5; color: #065F46; }
+    .status-published { background: #F7EEDD; color: #9A7B2E; }
     .status-draft { background: #FEF3C7; color: #92400E; }
     .status-hidden { background: #E5E7EB; color: #374151; }
-    .status-sold { background: #FEE2E2; color: #991B1B; }
+    .status-sold { background: #E3EEFD; color: #1E40AF; }
 
     .action-btns { display: flex; gap: 4px; }
     .action-btns .btn { padding: 4px 10px; font-size: 0.75rem; }
@@ -81,28 +83,34 @@
     .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* === FORM === */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,26,46,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 100; }
     .modal-overlay.active { display: block; }
-    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; width: 90%; max-width: 640px; max-height: 90vh; overflow-y: auto; z-index: 101; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-    .modal.active { display: block; }
-    .modal-header { padding: 20px 24px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 1; }
-    .modal-header h2 { font-size: 1.125rem; }
-    .modal-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: none; background: transparent; cursor: pointer; font-size: 1.25rem; color: #6B7280; }
-    .modal-close:hover { background: #F3F4F6; }
-    .modal-body { padding: 24px; }
-    .modal-footer { padding: 16px 24px; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end; gap: 8px; }
+    .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 16px; width: 92%; max-width: 660px; max-height: 92vh; overflow-y: auto; z-index: 101; box-shadow: 0 30px 80px rgba(0,0,0,0.28); border: 1px solid rgba(201,169,110,0.25); }
+    .modal.active { display: block; animation: modalIn 0.28s cubic-bezier(0.16,1,0.3,1); }
+    @keyframes modalIn { from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    .modal::before { content: ''; display: block; height: 4px; background: linear-gradient(90deg, #C9A96E, #E5BA22, #C9A96E); }
+    .modal-header { padding: 22px 28px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: linear-gradient(180deg, #1A1A2E 0%, #20203a 100%); color: #fff; z-index: 1; }
+    .modal-header h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 600; letter-spacing: 0.01em; }
+    .modal-close { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: none; background: rgba(255,255,255,0.08); cursor: pointer; font-size: 1.4rem; color: rgba(255,255,255,0.75); transition: 0.2s; }
+    .modal-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
+    .modal-body { padding: 28px; }
+    .modal-footer { padding: 18px 28px; border-top: 1px solid #F0F0F3; display: flex; justify-content: flex-end; gap: 10px; background: #FAFAFB; }
 
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
     .form-full { grid-column: 1 / -1; }
 
-    .form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.875rem; font-family: inherit; min-height: 80px; resize: vertical; }
-    .form-group textarea:focus { outline: none; border-color: #C9A96E; }
-    .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.875rem; background: white; }
+    .form-group textarea { width: 100%; padding: 11px 14px; border: 1px solid #E2E2E8; border-radius: 10px; font-size: 0.9375rem; font-family: inherit; color: #1F2937; background: #FCFCFD; min-height: 84px; resize: vertical; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+    .form-group textarea:hover { border-color: #C9A96E; }
+    .form-group textarea:focus { outline: none; border-color: #C9A96E; background: #fff; box-shadow: 0 0 0 4px rgba(201,169,110,0.12); }
+    .form-group select { width: 100%; padding: 11px 14px; border: 1px solid #E2E2E8; border-radius: 10px; font-size: 0.9375rem; font-family: inherit; color: #1F2937; background: #FCFCFD; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+    .form-group select:hover { border-color: #C9A96E; }
+    .form-group select:focus { outline: none; border-color: #C9A96E; background: #fff; box-shadow: 0 0 0 4px rgba(201,169,110,0.12); }
 
     .form-section { margin-bottom: 24px; }
     .form-section:last-child { margin-bottom: 0; }
-    .form-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #9CA3AF; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #F3F4F6; }
+    .form-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #C9A96E; margin-bottom: 16px; padding-left: 12px; position: relative; }
+    .form-section-title::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 14px; background: linear-gradient(180deg, #C9A96E, #E5BA22); border-radius: 2px; }
     .form-hint { font-size: 0.75rem; color: #9CA3AF; margin-top: 6px; line-height: 1.4; }
     .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.875rem; color: #374151; }
     .checkbox-label input { width: 18px; height: 18px; accent-color: #C9A96E; }
@@ -164,10 +172,10 @@
         <div class="toolbar-left">
           <select id="filter-status" class="filter-select">
             <option value="">Tất cả trạng thái</option>
-            <option value="published">Đang bán</option>
+            <option value="published">Đã thi công</option>
             <option value="draft">Nháp</option>
             <option value="hidden">Ẩn</option>
-            <option value="sold">Đã bán</option>
+                <option value="sold">Đang thi công</option>
           </select>
           <select id="filter-featured" class="filter-select">
             <option value="">Tất cả nổi bật</option>
@@ -227,11 +235,11 @@
               <label for="unit-status">Trạng thái hiển thị</label>
               <select id="unit-status">
                 <option value="draft">Nháp (chưa đăng)</option>
-                <option value="published">Đang bán (hiện trên web)</option>
+                <option value="published">Đã thi công (hiện trên web)</option>
                 <option value="hidden">Ẩn</option>
-                <option value="sold">Đã bán</option>
+            <option value="sold">Đang thi công</option>
               </select>
-              <p class="form-hint">Chọn "Đang bán" để căn hộ xuất hiện trên trang chủ.</p>
+              <p class="form-hint">Chọn "Đã thi công" để căn hộ xuất hiện trên trang chủ.</p>
             </div>
           </div>
           <div class="form-row">
