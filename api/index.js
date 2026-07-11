@@ -249,7 +249,24 @@ app.get('/api/debug-auth', async (c) => {
   } catch (e) {
     webCryptoWorks = 'error: ' + e.message;
   }
-  return c.json({ hasSecret, secretLen, nodeCryptoWorks, webCryptoWorks, nodeVersion: process.version, hasGlobalCrypto: typeof crypto !== 'undefined' });
+  // Test token round-trip
+  let tokenTest = 'untested';
+  try {
+    const { createHmac, timingSafeEqual } = await import('node:crypto');
+    const secret = process.env.ADMIN_SECRET;
+    const payload = `testuser:${Date.now() + 86400000}:admin`;
+    const payloadB64 = Buffer.from(payload, 'utf-8').toString('base64url');
+    const sig = createHmac('sha256', secret).update(payloadB64).digest('base64url');
+    const token = `${payloadB64}.${sig}`;
+    // Verify
+    const parts = token.split('.');
+    const sigActual = createHmac('sha256', secret).update(parts[0]).digest('base64url');
+    const match = parts[1] === sigActual;
+    tokenTest = { created: token.substring(0, 20) + '...', match };
+  } catch (e) {
+    tokenTest = 'error: ' + e.message;
+  }
+  return c.json({ hasSecret, secretLen, nodeCryptoWorks, webCryptoWorks, nodeVersion: process.version, hasGlobalCrypto: typeof crypto !== 'undefined', tokenTest });
 });
 
 /**
