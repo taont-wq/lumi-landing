@@ -101,8 +101,8 @@ async function verifyAdminToken(token) {
     const sigActual = createHmac('sha256', secret).update(payloadB64).digest('base64url');
 
     // Constant-time compare để tránh timing attack
-    const a = Buffer.from(sigExpected);
-    const b = Buffer.from(sigActual);
+    const a = Buffer.from(sigExpected, 'base64url');
+    const b = Buffer.from(sigActual, 'base64url');
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
     const payloadStr = Buffer.from(payloadB64, 'base64url').toString('utf-8');
