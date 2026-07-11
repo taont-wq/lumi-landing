@@ -273,16 +273,22 @@ app.get('/api/debug-auth', async (c) => {
 app.post('/api/debug-login', async (c) => {
   try {
     const { email, password } = await c.req.json();
-    // Hardcode test: create token like login does
-    const fakeUser = { id: 'test-id-123', role: 'admin' };
-    const token = await createAdminToken(fakeUser.id, fakeUser.role);
+    // Thực hiện login thật
+    const res = await sbAdmin(`admin_users?select=id,email,password_hash,role,is_active&email=eq.${encodeURIComponent(email)}&limit=1`);
+    const users = await res.json();
+    if (!users.length) return c.json({ step: 'no_user' });
+    const user = users[0];
+    const pwMatch = await verifyPassword(password, user.password_hash);
+    if (!pwMatch) return c.json({ step: 'bad_password' });
+    const token = await createAdminToken(user.id, user.role);
     const verified = await verifyAdminToken(token);
     return c.json({
+      userId: user.id,
+      userIdType: typeof user.id,
+      userIdLength: user.id ? user.id.length : 0,
       tokenCreated: !!token,
-      tokenSample: token ? token.substring(0, 30) + '...' : null,
+      tokenSample: token ? token.substring(0, 40) + '...' : null,
       verified,
-      verifyAdminTokenType: typeof verifyAdminToken,
-      createAdminTokenType: typeof createAdminToken,
     });
   } catch (e) {
     return c.json({ error: e.message, stack: e.stack });
