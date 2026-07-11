@@ -71,21 +71,20 @@ function rateLimit(c, tier = 'public') {
 }
 
 // =============================================================
-// ADMIN AUTH — HMAC-based token (no JWT library needed)
+// ADMIN AUTH — HMAC-based token (node:crypto, reliable on Vercel)
 // =============================================================
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 // Tạo token cho admin user
+// Format: base64url(payload).base64url(hmac_signature)
 async function createAdminToken(userId, role) {
   const secret = process.env.ADMIN_SECRET;
   if (!secret) return null;
 
   const payload = `${userId}:${Date.now() + 86400000}:${role}`; // 24h expiry
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sigBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
-  const sig = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
-  return btoa(payload) + '.' + sig;
+  const payloadB64 = Buffer.from(payload, 'utf-8').toString('base64url');
+  const sig = createHmac('sha256', secret).update(payloadB64).digest('base64url');
+  return `${payloadB64}.${sig}`;
 }
 
 // Verify và decode admin token
@@ -98,18 +97,15 @@ async function verifyAdminToken(token) {
     const parts = token.split('.');
     if (parts.length !== 2) return null;
 
-    const payloadStr = atob(parts[0]);
-    const sigExpected = parts[1];
+    const [payloadB64, sigExpected] = parts;
+    const sigActual = createHmac('sha256', secret).update(payloadB64).digest('base64url');
 
-    // Verify HMAC
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey('raw', encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
-    const sigBytes = Uint8Array.from(atob(sigExpected), c => c.charCodeAt(0));
-    const valid = await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(payloadStr));
-    if (!valid) return null;
+    // Constant-time compare để tránh timing attack
+    const a = Buffer.from(sigExpected);
+    const b = Buffer.from(sigActual);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
-    // Parse payload: userId:expiry:role
+    const payloadStr = Buffer.from(payloadB64, 'base64url').toString('utf-8');
     const parts2 = payloadStr.split(':');
     if (parts2.length < 3) return null;
 
