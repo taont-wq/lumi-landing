@@ -417,8 +417,8 @@ app.post('/api/admin/login', async (c) => {
 
     return c.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (err) {
-    console.error('POST /api/admin/login error:', err.message, err.stack);
-    return c.json({ error: 'Internal server error', detail: err.message }, 500);
+    console.error('POST /api/admin/login error:', err.message);
+    return c.json({ error: 'Internal server error' }, 500);
   }
 });
 
