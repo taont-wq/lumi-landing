@@ -133,29 +133,30 @@ async function onProjectChange() {
     setLoading(towerSelect, 'Đang tải toà...');
   }
 
-  // Check cache first
-  let towers = towerCache.get(projectId);
-  if (!towers) {
-    towers = await apiFetch(`/towers?project=${encodeURIComponent(projectId)}`);
-    towerCache.set(projectId, towers);
-  }
+  try {
+    // Check cache first
+    let towers = towerCache.get(projectId);
+    if (!towers) {
+      towers = await apiFetch(`/towers?project=${encodeURIComponent(projectId)}`);
+      towerCache.set(projectId, towers);
+    }
 
-  // Discard stale response
-  if (requestId !== lastFilterRequest) return;
+    // Discard stale response
+    if (requestId !== lastFilterRequest) return;
 
-  if (towerSelect) {
-    towerSelect.disabled = false;
-    towerSelect.innerHTML = '<option value="">Chọn toà</option>'
-      + towers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  }
+    if (towerSelect) {
+      towerSelect.disabled = false;
+      towerSelect.innerHTML = '<option value="">Chọn toà</option>'
+        + towers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    }
 
-  // Auto-load units nếu chỉ có 1 tower
-  if (towers.length === 1 && towerSelect) {
-    towerSelect.value = towers[0].id;
-    await loadUnits(towers[0].id, projectId, requestId);
-  } else {
-    showUnitsSection(false);
-  }
+    // Auto-load units nếu chỉ có 1 tower
+    if (towers.length === 1 && towerSelect) {
+      towerSelect.value = towers[0].id;
+      await loadUnits(towers[0].id, projectId, requestId);
+    } else {
+      showUnitsSection(false);
+    }
   } catch (err) {
     console.error('Load towers failed:', err);
     if (requestId === lastFilterRequest && towerSelect) {

@@ -6,6 +6,7 @@
 // =============================================================
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import bcrypt from 'bcryptjs';
 import { sanitize, requireFields, ALLOWED_UNIT_FIELDS } from './validate.js';
 import { sendZalo, parseNewUnit } from './zalo.js';
 
@@ -421,29 +422,19 @@ app.post('/api/admin/login', async (c) => {
   }
 });
 
-// Helper: verify SHA-256 password (zero dependencies)
-// password_hash trong DB = hex(SHA-256(password + ADMIN_SECRET_prefix))
+// Helper: verify bcrypt password
 async function verifyPassword(plainText, hash) {
   try {
-    const encoder = new TextEncoder();
-    const salt = (process.env.ADMIN_SECRET || 'lumi').slice(0, 16);
-    const data = encoder.encode(plainText + salt);
-    const hashBytes = await crypto.subtle.digest('SHA-256', data);
-    const computed = Array.from(new Uint8Array(hashBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
-    return computed === hash;
+    return await bcrypt.compare(plainText, hash);
   } catch (_) {
     return false;
   }
 }
 
-// Helper: tạo SHA-256 hash cho password (dùng khi tạo admin user)
+// Helper: tạo bcrypt hash cho password (dùng khi tạo admin user)
 // export để dùng trong seed script
 async function hashPassword(plainText) {
-  const encoder = new TextEncoder();
-  const salt = (process.env.ADMIN_SECRET || 'lumi').slice(0, 16);
-  const data = encoder.encode(plainText + salt);
-  const hashBytes = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hashBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return bcrypt.hash(plainText, 10);
 }
 
 // =============================================================

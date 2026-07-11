@@ -159,11 +159,14 @@ input, select {
 }
 
 .header-phone {
+  display: inline-flex;
+  align-items: center;
   font-weight: 600;
   color: var(--gold);
   font-size: var(--font-size-sm);
   letter-spacing: 0.02em;
   transition: var(--transition);
+  gap: 4px;
 }
 
 .header-phone:hover {
@@ -770,6 +773,37 @@ input, select {
   color: var(--gold);
   font-size: var(--font-size-sm);
   opacity: 0.7;
+}
+
+.footer-addresses {
+  display: flex;
+  gap: var(--space-xl);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: var(--space-sm) 0;
+}
+
+.footer-address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+  max-width: 240px;
+}
+
+.footer-address-label {
+  color: var(--gold);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.footer-address span:last-child {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
 }
 
 .footer-links {
