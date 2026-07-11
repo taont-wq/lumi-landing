@@ -851,8 +851,8 @@ input, select {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.92);
-  width: 90vw;
-  max-width: 880px;
+  width: 92vw;
+  max-width: 960px;
   max-height: 92vh;
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -881,7 +881,6 @@ input, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
   background: rgba(0,0,0,0.6);
   color: white;
   border-radius: 50%;
@@ -899,10 +898,103 @@ input, select {
   padding: var(--space-xl);
 }
 
+/* Premium 2-column unit modal */
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.modal-media {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.modal-floorplan {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.modal-floorplan:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.modal-location {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: var(--space-md);
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.modal-location span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-location svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gold);
+}
+
+.modal-contact .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-contact .btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes modalFadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal-grid > * {
+  animation: modalFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.modal-grid > *:last-child {
+  animation-delay: 0.06s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-grid > * { animation: none; }
+}
+
+@media (max-width: 768px) {
+  .modal-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+}
+
 .modal-gallery {
   display: grid;
   gap: var(--space-sm);
-  margin-bottom: var(--space-xl);
 }
 
 .modal-gallery-main {

@@ -665,12 +665,16 @@ app.get('/api/admin/units', async (c) => {
     const status = c.req.query('status');
     const search = c.req.query('search');
     const featured = c.req.query('featured');
+    const projectId = c.req.query('project');
+    const towerId = c.req.query('tower');
 
     let filter = '';
     if (status) filter += `&status=eq.${encodeURIComponent(status)}`;
     if (search) filter += `&code=ilike.*${encodeURIComponent(search)}*`;
     if (featured === 'true') filter += '&is_featured=eq.true';
     if (featured === 'false') filter += '&is_featured=eq.false';
+    if (projectId) filter += `&project_id=eq.${encodeURIComponent(projectId)}`;
+    if (towerId) filter += `&tower_id=eq.${encodeURIComponent(towerId)}`;
 
     const dataRes = await sbAdmin(
       `units?select=*,project:project_id(name,slug),tower:tower_id(name,slug)&order=updated_at.desc&limit=${limit}&offset=${offset}${filter}`

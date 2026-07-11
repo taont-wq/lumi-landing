@@ -16,6 +16,8 @@ let currentPage = 1;
 let currentFilter = '';
 let currentFeatured = '';
 let currentSearch = '';
+let currentProject = '';
+let currentTower = '';
 
 // =============================================================
 // INIT
@@ -25,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showApp();
     loadUnits();
     loadProjectSelect();
+    populateFilterProjects();
   }
   bindEvents();
 });
@@ -34,6 +37,8 @@ function bindEvents() {
   document.getElementById('logout-btn')?.addEventListener('click', onLogout);
   document.getElementById('filter-status')?.addEventListener('change', onFilterChange);
   document.getElementById('filter-featured')?.addEventListener('change', onFilterChange);
+  document.getElementById('filter-project')?.addEventListener('change', filterProjectChange);
+  document.getElementById('filter-tower')?.addEventListener('change', filterTowerChange);
   document.getElementById('search-input')?.addEventListener('input', debounce(onSearchChange, 400));
   document.getElementById('add-unit-btn')?.addEventListener('click', () => openForm());
   document.getElementById('modal-close-btn')?.addEventListener('click', closeForm);
@@ -174,6 +179,8 @@ async function loadUnits() {
     if (currentFilter) params.set('status', currentFilter);
     if (currentFeatured) params.set('featured', currentFeatured);
     if (currentSearch) params.set('search', currentSearch);
+  if (currentProject) params.set('project', currentProject);
+  if (currentTower) params.set('tower', currentTower);
 
     const result = await apiAdmin(`/admin/units?${params}`);
 
@@ -199,7 +206,7 @@ async function loadUnits() {
           <button class="btn btn-sm ${u.is_featured ? 'btn-primary' : 'btn-secondary'}"
             onclick="toggleFeatured('${u.id}', ${u.is_featured ? 'false' : 'true'})"
             title="${u.is_featured ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật'}">
-            ${u.is_featured ? '★' : '☆'}
+             <svg class="star-svg" viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2l2.9 6.26L21.5 9.27l-4.75 4.62L17.9 21 12 17.27 6.1 21l1.15-7.11L2.5 9.27l6.6-1.01L12 2z"/></svg>
           </button>
         </td>
         <td>
@@ -253,6 +260,8 @@ window.goPage = function(page) {
 function onFilterChange() {
   currentFilter = document.getElementById('filter-status').value;
   currentFeatured = document.getElementById('filter-featured').value;
+  currentProject = document.getElementById('filter-project')?.value || '';
+  currentTower = document.getElementById('filter-tower')?.value || '';
   currentPage = 1;
   loadUnits();
 }
@@ -322,6 +331,43 @@ async function loadTowerSelect(projectId) {
 function onProjectChange() {
   const projectId = document.getElementById('unit-project').value;
   loadTowerSelect(projectId);
+}
+
+async function populateFilterProjects() {
+  const select = document.getElementById('filter-project');
+  if (!select) return;
+  try {
+    const projects = await apiAdmin('/admin/projects');
+    select.innerHTML = '<option value="">Tất cả dự án</option>' + projects.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  } catch (err) {
+    console.error('Load filter projects error:', err);
+  }
+}
+
+function filterProjectChange() {
+  currentProject = document.getElementById('filter-project')?.value || '';
+  const towerSel = document.getElementById('filter-tower');
+  if (!currentProject) {
+    if (towerSel) { towerSel.innerHTML = '<option value="">Chọn dự án trước</option>'; towerSel.disabled = true; }
+    currentTower = '';
+    loadUnits();
+    return;
+  }
+  if (towerSel) {
+    towerSel.disabled = true;
+    towerSel.innerHTML = '<option value="">Đang tải...</option>';
+    apiAdmin(`/admin/towers?project=${encodeURIComponent(currentProject)}`).then(towers => {
+      towerSel.innerHTML = '<option value="">Tất cả toà</option>' + towers.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+      towerSel.disabled = false;
+    }).catch(err => { console.error(err); towerSel.innerHTML = '<option value="">Lỗi tải</option>'; });
+  }
+  currentTower = '';
+  loadUnits();
+}
+
+function filterTowerChange() {
+  currentTower = document.getElementById('filter-tower')?.value || '';
+  loadUnits();
 }
 
 // =============================================================

@@ -24,6 +24,17 @@ const PAGE_SIZE = 20;
 const towerCache = new Map(); // projectId → towers[]
 let currentModalImages = []; // ảnh hiện tại trong modal chi tiết
 
+// Inline SVG icons (thin-stroke, Heroicons-outline style)
+const ICON = {
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18M18.75 3v18M9 6.75h1.5M9 12h1.5M9 17.25h1.5M13.5 6.75h1.5M13.5 12h1.5M13.5 17.25h1.5"/></svg>',
+  tower: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 21h16.5M6 21V5a1 1 0 011-1h10a1 1 0 011 1v16M9 8.25h.008M15 8.25h.008M9 12h.008M15 12h.008M9 15.75h.008M15 15.75h.008"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106a1.125 1.125 0 00-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-3.94-3.94c-.162-.441-.004-.928.38-1.21l1.293-.97a1.125 1.125 0 00.417-1.173L8.25 3.102a1.125 1.125 0 00-1.091-.852H5.25A2.25 2.25 0 003 4.5v2.25z"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>',
+  zalo: '<svg viewBox="0 0 50 50" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M22.782 0.166H27.199c6.066 0 9.611.891 12.758 2.578a13.3 13.3 0 017.299 7.299c1.687 3.147 2.578 6.692 2.578 12.758v4.398c0 6.066-.891 9.611-2.578 12.758a13.3 13.3 0 01-7.299 7.299c-3.147 1.687-6.692 2.578-12.758 2.578h-4.398c-6.066 0-9.611-.891-12.758-2.578a13.3 13.3 0 01-7.299-7.299C1.057 36.81.166 33.265.166 27.199v-4.398c0-6.066.891-9.611 2.578-12.758a13.3 13.3 0 017.299-7.299C13.17 1.057 16.735.166 22.782.166z" fill="#0068FF"/><path opacity=".12" fill-rule="evenodd" clip-rule="evenodd" d="M49.834 26.474v.725c0 6.067-.891 9.612-2.578 12.759a13.3 13.3 0 01-7.299 7.298c-3.147 1.687-6.692 2.578-12.758 2.578h-4.398c-4.964 0-8.24-.596-10.99-1.738L7.275 43.427l42.559-16.953z" fill="#001A33"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.779 43.589c2.323.257 5.227-.405 7.289-1.406 8.954 4.949 22.952 4.713 31.424-.71.329-.492.636-1.005.92-1.536 1.694-3.159 2.588-6.717 2.588-12.805v-4.414c0-6.089-.894-9.647-2.588-12.805-1.674-3.158-4.166-5.632-7.325-7.325-3.158-1.693-6.716-2.587-12.805-2.587h-4.433c-5.185 0-8.552.653-11.38 1.899-.155.138-.306.279-.455.422C2.717 10.32 2.087 27.66 9.123 37.078l.026.042c1.084 1.599.038 4.395-1.598 6.032-.266.247-.171.4.228.437z" fill="#fff"/><path d="M20.563 17h-9.725v2.085h6.749l-6.654 8.247c-.209.303-.36.587-.36 1.232v.53h9.175c.455 0 .834-.378.834-.833v-1.119h-6.256l6.256-7.848.341-.474c.36-.53.436-.986.436-1.536V17z" fill="#0068FF"/><path d="M32.942 29.095h1.383V17h-2.085v11.393c0 .38.303.702.702.702z" fill="#0068FF"/><path d="M25.814 19.692a4.739 4.739 0 100 9.479 4.739 4.739 0 000-9.479zm0 7.526a2.787 2.787 0 110-5.573 2.787 2.787 0 010 5.573z" fill="#0068FF"/><path d="M40.487 19.616a4.777 4.777 0 100 9.555 4.777 4.777 0 000-9.555zm0 7.602a2.806 2.806 0 110-5.611 2.806 2.806 0 010 5.611z" fill="#0068FF"/><path d="M29.456 29.094h1.119V19.957h-1.953v8.322c0 .436.38.815.834.815z" fill="#0068FF"/></svg>'
+};
+
 // =============================================================
 // INIT
 // =============================================================
@@ -398,54 +409,54 @@ window.openUnitModal = async function(unitId) {
           if (v.type === 'tiktok') {
             return `<blockquote class="tiktok-embed" cite="${escapeHtml(v.url)}"><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">Xem video TikTok</a></blockquote>`;
           }
-          return `<a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="btn btn-outline">🎬 Xem video</a>`;
+          return `<a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="btn btn-outline">${ICON.video}<span>Xem video</span></a>`;
         }).join('')}
       </div>` : '';
 
     content.innerHTML = `
-      <button class="modal-close" onclick="closeUnitModal()">&times;</button>
-      <div class="modal-gallery">
-        <div class="modal-gallery-main">
-          ${mainImg ? `<img id="modal-main-img" src="${escapeHtml(mainImg)}" alt="${escapeHtml(data.code)}" />` : `<div class="modal-gallery-empty">${escapeHtml(data.code)}</div>`}
-        </div>
-        ${images.length > 1 ? `<div class="modal-gallery-thumbs">${images.map((img, i) => `<button class="modal-thumb ${i === 0 ? 'active' : ''}" onclick="setGalleryImage(${i})"><img src="${escapeHtml(img)}" alt=""></button>`).join('')}</div>` : ''}
-      </div>
-      <div class="modal-info">
-        <div class="modal-eyebrow">Căn hộ nội thất cao cấp</div>
-        <h2>${detailTitle}</h2>
-        ${(projectName || towerName) ? `
-          <div class="modal-location">
-            ${projectName ? `<span>🏢 ${escapeHtml(projectName)}</span>` : ''}
-            ${towerName ? `<span>🏗️ Tòa ${escapeHtml(towerName)}</span>` : ''}
+      <button class="modal-close" onclick="closeUnitModal()">${ICON.close}</button>
+      <div class="modal-grid">
+        <div class="modal-media">
+          <div class="modal-gallery-main">
+            ${mainImg ? `<img id="modal-main-img" src="${escapeHtml(mainImg)}" alt="${escapeHtml(data.code)}" />` : `<div class="modal-gallery-empty">${escapeHtml(data.code)}</div>`}
           </div>
-        ` : ''}
-        <div class="modal-meta">
-          ${data.area ? `<span>Diện tích<strong>${data.area}m²</strong></span>` : ''}
-          ${data.bedrooms ? `<span>Phòng ngủ<strong>${data.bedrooms}PN</strong></span>` : ''}
-          ${data.floor ? `<span>Tầng<strong>${escapeHtml(data.floor)}</strong></span>` : ''}
-          ${data.style ? `<span>Phong cách<strong>${escapeHtml(data.style)}</strong></span>` : ''}
+          ${images.length > 1 ? `<div class="modal-gallery-thumbs">${images.map((img, i) => `<button class="modal-thumb ${i === 0 ? 'active' : ''}" onclick="setGalleryImage(${i})"><img src="${escapeHtml(img)}" alt=""></button>`).join('')}</div>` : ''}
+          ${data.floor_plan ? `<a href="${escapeHtml(data.floor_plan)}" target="_blank" rel="noopener" class="modal-floorplan">${ICON.doc}<span>Xem mặt bằng</span></a>` : ''}
+          ${videosHtml}
         </div>
-        ${data.description ? `<p class="modal-desc">${escapeHtml(data.description)}</p>` : ''}
-        ${data.features?.length ? `
-          <div class="modal-features">
-            <h3>Tiện ích</h3>
-            <ul>${data.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+        <div class="modal-info">
+          <div class="modal-eyebrow">Căn hộ nội thất cao cấp</div>
+          <h2>${detailTitle}</h2>
+          ${(projectName || towerName) ? `
+            <div class="modal-location">
+              ${projectName ? `<span>${ICON.building}<span>${escapeHtml(projectName)}</span></span>` : ''}
+              ${towerName ? `<span>${ICON.tower}<span>Toà ${escapeHtml(towerName)}</span></span>` : ''}
+            </div>
+          ` : ''}
+          <div class="modal-meta">
+            ${data.area ? `<span>Diện tích<strong>${data.area}m²</strong></span>` : ''}
+            ${data.bedrooms ? `<span>Phòng ngủ<strong>${data.bedrooms}PN</strong></span>` : ''}
+            ${data.floor ? `<span>Tầng<strong>${escapeHtml(data.floor)}</strong></span>` : ''}
+            ${data.style ? `<span>Phong cách<strong>${escapeHtml(data.style)}</strong></span>` : ''}
           </div>
-        ` : ''}
-        ${data.floor_plan ? `
-          <a href="${escapeHtml(data.floor_plan)}" target="_blank" rel="noopener" class="btn btn-outline">📄 Xem mặt bằng</a>
-        ` : ''}
-        ${videosHtml}
-        <div class="modal-contact">
-          <a href="tel:${(window.contactPhone || '').replace(/\s/g, '')}" class="btn btn-primary">📞 Gọi ngay</a>
-          <a href="https://zalo.me/${(window.zaloOA || '')}" target="_blank" rel="noopener" class="btn btn-zalo">💬 Chat Zalo</a>
+          ${data.description ? `<p class="modal-desc">${escapeHtml(data.description)}</p>` : ''}
+          ${data.features?.length ? `
+            <div class="modal-features">
+              <h3>Tiện ích</h3>
+              <ul>${data.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          <div class="modal-contact">
+            <a href="tel:${(window.contactPhone || '').replace(/\s/g, '')}" class="btn btn-primary">${ICON.phone}<span>Gọi ngay</span></a>
+            <a href="https://zalo.me/${(window.zaloOA || '')}" target="_blank" rel="noopener" class="btn btn-zalo">${ICON.zalo}<span>Chat Zalo</span></a>
+          </div>
         </div>
       </div>
     `;
   } catch (err) {
     console.error('Load unit detail failed:', err);
     document.getElementById('modal-content').innerHTML = `
-      <button class="modal-close" onclick="closeUnitModal()">&times;</button>
+      <button class="modal-close" onclick="closeUnitModal()">${ICON.close}</button>
       <div class="modal-error">
         <p>Không thể tải thông tin căn hộ</p>
         <button class="btn" onclick="closeUnitModal()">Đóng</button>

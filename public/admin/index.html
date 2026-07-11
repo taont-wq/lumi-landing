@@ -73,6 +73,7 @@
 
     .action-btns { display: flex; gap: 4px; }
     .action-btns .btn { padding: 4px 10px; font-size: 0.75rem; }
+    .star-svg { vertical-align: middle; }
 
     .empty-row td { text-align: center; padding: 40px; color: #9CA3AF; }
 
@@ -171,6 +172,7 @@
       .preview-col { position: static; }
     }
   </style>
+  <link id="favicon" rel="icon" type="image/png" href="https://noithatlumi.vn/wp-content/uploads/2025/09/logo-Lumi-05-1-scaled.png">
 </head>
 <body>
 
@@ -219,6 +221,12 @@
             <option value="">Tất cả nổi bật</option>
             <option value="true">Nổi bật</option>
             <option value="false">Không nổi bật</option>
+          </select>
+          <select id="filter-project" class="filter-select">
+            <option value="">Tất cả dự án</option>
+          </select>
+          <select id="filter-tower" class="filter-select" disabled>
+            <option value="">Chọn dự án trước</option>
           </select>
           <input type="text" id="search-input" class="search-input" placeholder="Tìm mã căn..." autocomplete="off">
         </div>
