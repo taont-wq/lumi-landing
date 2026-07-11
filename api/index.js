@@ -446,7 +446,7 @@ async function hashPassword(plainText) {
  */
 app.post('/api/admin/units', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -512,7 +512,7 @@ app.post('/api/admin/units', async (c) => {
  */
 app.delete('/api/admin/units/:id', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -536,7 +536,7 @@ app.delete('/api/admin/units/:id', async (c) => {
  */
 app.get('/api/admin/units', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -583,7 +583,7 @@ app.get('/api/admin/units', async (c) => {
  */
 app.get('/api/admin/units/detail/:id', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -611,7 +611,7 @@ app.get('/api/admin/units/detail/:id', async (c) => {
  */
 app.put('/api/admin/units/:id', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -667,7 +667,7 @@ app.put('/api/admin/units/:id', async (c) => {
  */
 app.patch('/api/admin/units/featured/:id', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -701,7 +701,7 @@ app.patch('/api/admin/units/featured/:id', async (c) => {
  */
 app.get('/api/admin/projects', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -720,7 +720,7 @@ app.get('/api/admin/projects', async (c) => {
  */
 app.get('/api/admin/towers', async (c) => {
   try {
-    const authError = requireAdmin(c);
+    const authError = await requireAdmin(c);
     if (authError) return c.json({ error: 'Unauthorized' }, 401);
 
     if (rateLimit(c, 'admin')) return c.json({ error: 'Too many requests' }, 429);
@@ -908,22 +908,6 @@ app.post('/api/zalo/webhook', async (c) => {
     // Không return lỗi cho Zalo (Zalo sẽ retry nếu thấy lỗi)
     return c.json({ ok: true });
   }
-});
-
-// =============================================================
-// DEBUG (temporary)
-// =============================================================
-app.get('/api/debug-token', async (c) => {
-  const auth = c.req.header('Authorization');
-  if (!auth || !auth.startsWith('Bearer ')) return c.json({ error: 'no auth' }, 401);
-  const token = auth.slice(7);
-  const user = await verifyAdminToken(token);
-  return c.json({
-    hasSecret: !!process.env.ADMIN_SECRET,
-    secretLen: (process.env.ADMIN_SECRET || '').length,
-    tokenParts: token.split('.').length,
-    verifyResult: user,
-  });
 });
 
 // =============================================================
