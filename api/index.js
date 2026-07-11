@@ -229,18 +229,27 @@ app.get('/api/config', (c) => {
 });
 
 // DEBUG (temporary)
-app.get('/api/debug-auth', (c) => {
+app.get('/api/debug-auth', async (c) => {
   const hasSecret = !!process.env.ADMIN_SECRET;
   const secretLen = process.env.ADMIN_SECRET ? process.env.ADMIN_SECRET.length : 0;
-  let cryptoWorks = false;
+  let nodeCryptoWorks = 'untested';
+  let webCryptoWorks = 'untested';
   try {
-    const { createHmac } = require('node:crypto');
+    const { createHmac } = await import('node:crypto');
     const sig = createHmac('sha256', process.env.ADMIN_SECRET || 'x').update('test').digest('base64url');
-    cryptoWorks = !!sig;
+    nodeCryptoWorks = !!sig;
   } catch (e) {
-    cryptoWorks = 'error: ' + e.message;
+    nodeCryptoWorks = 'error: ' + e.message;
   }
-  return c.json({ hasSecret, secretLen, cryptoWorks, nodeVersion: process.version });
+  try {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(process.env.ADMIN_SECRET || 'x'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode('test'));
+    webCryptoWorks = !!sig && sig.byteLength > 0;
+  } catch (e) {
+    webCryptoWorks = 'error: ' + e.message;
+  }
+  return c.json({ hasSecret, secretLen, nodeCryptoWorks, webCryptoWorks, nodeVersion: process.version, hasGlobalCrypto: typeof crypto !== 'undefined' });
 });
 
 /**
