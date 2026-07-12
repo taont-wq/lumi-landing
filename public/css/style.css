@@ -725,14 +725,48 @@ input, select {
 .featured-card-body h4 {
   font-size: var(--font-size-lg);
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-sm);
   font-family: var(--font-heading);
   color: var(--black);
 }
 
-.featured-card-body p {
+.featured-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
   font-size: var(--font-size-sm);
   color: var(--text-light);
+  margin-bottom: var(--space-md);
+}
+
+.featured-card-meta .featured-card-style {
+  color: var(--gold-dark);
+  font-weight: 500;
+}
+
+.featured-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.featured-card-contact {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(229, 186, 34, 0.12);
+  border: 1px solid rgba(229, 186, 34, 0.3);
+  color: var(--gold-dark);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.featured-card-btn {
+  padding: 10px 20px;
+  font-size: var(--font-size-sm);
 }
 
 /* === UNITS SECTION (ẩn khi chưa lọc) === */

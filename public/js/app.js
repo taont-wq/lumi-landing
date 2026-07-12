@@ -436,7 +436,15 @@ async function loadFeatured() {
         </div>
         <div class="featured-card-body">
           <h4>${escapeHtml(unit.code)}</h4>
-          <p>${escapeHtml(String(unit.area || ''))}m² · ${escapeHtml(String(unit.bedrooms || ''))}PN · ${escapeHtml(unit.style || '')}</p>
+          <div class="featured-card-meta">
+            ${unit.area ? `<span>${escapeHtml(String(unit.area))} m²</span>` : ''}
+            ${unit.bedrooms ? `<span>${escapeHtml(String(unit.bedrooms))} PN</span>` : ''}
+            ${unit.style ? `<span class="featured-card-style">${escapeHtml(unit.style)}</span>` : ''}
+          </div>
+          <div class="featured-card-foot">
+            <span class="featured-card-contact">Liên hệ</span>
+            <button type="button" class="btn btn-outline featured-card-btn" onclick="event.stopPropagation(); showUnitDetail('${escapeHtml(unit.id)}')">Xem chi tiết</button>
+          </div>
         </div>
       </div>
     `).join('');
