@@ -281,6 +281,7 @@ app.get('/api/units', async (c) => {
     const towerId = c.req.query('tower');
     const projectId = c.req.query('project');
     const search = c.req.query('search');
+    const bedrooms = c.req.query('bedrooms');
     const page = Math.max(1, parseInt(c.req.query('page')) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit')) || 20));
     const offset = (page - 1) * limit;
@@ -289,6 +290,11 @@ app.get('/api/units', async (c) => {
     if (projectId) filter += `&project_id=eq.${encodeURIComponent(projectId)}`;
     if (towerId) filter += `&tower_id=eq.${encodeURIComponent(towerId)}`;
     if (search) filter += `&code=ilike.*${encodeURIComponent(search)}*`;
+    if (bedrooms) {
+      filter += bedrooms === '5'
+        ? '&bedrooms=gte.5'
+        : `&bedrooms=eq.${encodeURIComponent(bedrooms)}`;
+    }
 
     const query = `units?select=*&${filter}&order=sort_order.asc,code.asc&limit=${limit}&offset=${offset}`;
     const countQuery = `units?select=id&${filter}&limit=0`;

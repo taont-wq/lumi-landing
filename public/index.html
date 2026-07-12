@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lumi Design — Nội thất căn hộ cao cấp</title>
-  <meta name="description" content="Lumi Design — Tra cứu căn hộ nội thất cao cấp tại các dự án hàng đầu: Vinhomes, Ecopark. Bộ lọc 3 cấp: Dự án → Toà → Căn hộ. Liên hệ: 058 929 4444">
+  <meta name="description" content="Lumi Design — Tra cứu căn hộ nội thất cao cấp tại các dự án hàng đầu: Vinhomes, Ecopark. Bộ lọc 4 cấp: Dự án → Toà → Số phòng ngủ → Căn hộ. Liên hệ: 058 929 4444">
   <meta name="robots" content="index, follow">
 
   <!-- Open Graph (Zalo, Facebook) -->
@@ -76,6 +76,10 @@
             <select id="tower-select" class="filter-select" aria-label="Chọn toà" disabled>
               <option value="">Chọn dự án trước</option>
             </select>
+
+            <select id="bedroom-select" class="filter-select" aria-label="Chọn số phòng ngủ" disabled>
+              <option value="" disabled selected>Số phòng ngủ</option>
+            </select>
           </div>
         </div>
       </div>
@@ -87,6 +91,9 @@
       </aside>
     </div>
   </section>
+
+  <!-- ==================== INLINE UNIT DETAIL (hiện khi bấm vào căn) ==================== -->
+  <div id="unit-detail"></div>
 
   <!-- ==================== UNITS (hiện khi lọc) ==================== -->
   <section class="section" id="units-section" style="display:none">
@@ -141,6 +148,7 @@
   </main>
 
   <!-- ==================== FOOTER ==================== -->
+
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-brand">
@@ -173,12 +181,6 @@
       <p class="footer-copy">&copy; <span id="footer-year">2024</span> Lumi Design. All rights reserved.</p>
     </div>
   </footer>
-
-  <!-- ==================== MODAL ==================== -->
-  <div id="modal-overlay" class="modal-overlay"></div>
-  <div id="unit-modal" class="modal">
-    <div id="modal-content" class="modal-content"></div>
-  </div>
 
   <!-- Scripts -->
   <script type="module" src="/js/utils.js"></script>

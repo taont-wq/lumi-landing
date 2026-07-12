@@ -1,7 +1,7 @@
 // =============================================================
 // LUMI DESIGN — Landing Page Main Script
 // =============================================================
-// 3-level filter: Dự án → Toà → Căn hộ
+// 4-level filter: Dự án → Toà → Số phòng ngủ → Căn hộ
 // Featured, Search, Contact
 // =============================================================
 import { API, getConfig, apiFetch, setLoading, setError, setEmpty } from './utils.js';
@@ -9,20 +9,32 @@ import { API, getConfig, apiFetch, setLoading, setError, setEmpty } from './util
 // --- DOM refs ---
 const projectSelect = document.getElementById('project-select');
 const towerSelect = document.getElementById('tower-select');
+const bedroomSelect = document.getElementById('bedroom-select');
 const unitGrid = document.getElementById('unit-grid');
+const unitDetail = document.getElementById('unit-detail');
 const searchInput = document.getElementById('search-input');
 const featuredGrid = document.getElementById('featured-grid');
 const contactPhone = document.getElementById('contact-phone');
 const loadMoreBtn = document.getElementById('load-more');
 
+// Fixed bedroom filter options (3rd cascade level)
+const BEDROOM_OPTIONS = [
+  { value: '', label: 'Số phòng ngủ', disabled: true },
+  { value: '1', label: '1 PN' },
+  { value: '2', label: '2 PN' },
+  { value: '3', label: '3 PN' },
+  { value: '4', label: '4 PN' },
+  { value: '5', label: '5+ PN' },
+];
+
 // State
 let lastFilterRequest = 0;
-let currentFilter = { project: '', tower: '', search: '' };
+let currentFilter = { project: '', tower: '', bedrooms: '', search: '' };
 let currentPage = 1;
 let totalPages = 1;
 const PAGE_SIZE = 20;
 const towerCache = new Map(); // projectId → towers[]
-let currentModalImages = []; // ảnh hiện tại trong modal chi tiết
+let currentDetailImages = []; // ảnh hiện tại trong panel chi tiết inline
 
 // Inline SVG icons (thin-stroke, Heroicons-outline style)
 const ICON = {
@@ -52,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Bind events
   projectSelect?.addEventListener('change', onProjectChange);
   towerSelect?.addEventListener('change', onTowerChange);
+  bedroomSelect?.addEventListener('change', onBedroomChange);
   searchInput?.addEventListener('input', debounce(onSearchChange, 150));
   loadMoreBtn?.addEventListener('click', loadMore);
 
@@ -130,20 +143,31 @@ async function onProjectChange() {
   const projectId = projectSelect?.value || '';
   currentFilter.project = projectId;
   currentFilter.tower = '';
+  currentFilter.bedrooms = '';
   currentPage = 1;
   // Clear search text when project changes for faster feel
   if (searchInput) searchInput.value = '';
 
-  // Reset tower select
+  // Reset tower + bedroom selects
   if (towerSelect) {
-    if (!projectId) {
-      towerSelect.innerHTML = '<option value="">Chọn dự án trước</option>';
-      towerSelect.disabled = true;
-      showUnitsSection(false);
-      return;
-    }
-    setLoading(towerSelect, 'Đang tải toà...');
+    towerSelect.innerHTML = '<option value="">Chọn dự án trước</option>';
+    towerSelect.disabled = true;
   }
+  if (bedroomSelect) {
+    bedroomSelect.disabled = true;
+    populateBedrooms();
+    bedroomSelect.value = '';
+  }
+
+  // Close any open inline detail when context changes
+  closeUnitDetail();
+
+  if (!projectId) {
+    showUnitsSection(false);
+    return;
+  }
+
+  setLoading(towerSelect, 'Đang tải toà...');
 
   try {
     // Check cache first
@@ -165,7 +189,7 @@ async function onProjectChange() {
     // Auto-load units nếu chỉ có 1 tower
     if (towers.length === 1 && towerSelect) {
       towerSelect.value = towers[0].id;
-      await loadUnits(towers[0].id, projectId, requestId);
+      await onTowerChange();
     } else {
       showUnitsSection(false);
     }
@@ -177,13 +201,40 @@ async function onProjectChange() {
   }
 }
 
+function populateBedrooms() {
+  if (!bedroomSelect) return;
+  bedroomSelect.innerHTML = BEDROOM_OPTIONS.map(o =>
+    `<option value="${o.value}"${o.disabled ? ' disabled selected' : ''}>${o.label}</option>`
+  ).join('');
+}
+
 async function onTowerChange() {
   const requestId = ++lastFilterRequest;
   const towerId = towerSelect?.value || '';
   currentFilter.tower = towerId;
+  currentFilter.bedrooms = '';
   currentPage = 1;
 
-  await loadUnits(towerId, currentFilter.project, requestId);
+  // Enable bedroom select with fixed options
+  if (bedroomSelect) {
+    bedroomSelect.disabled = false;
+    populateBedrooms();
+    bedroomSelect.value = '';
+  }
+
+  closeUnitDetail();
+
+  await loadUnits(towerId, currentFilter.project, requestId, currentFilter.search, currentFilter.bedrooms);
+}
+
+async function onBedroomChange() {
+  const requestId = ++lastFilterRequest;
+  currentFilter.bedrooms = bedroomSelect?.value || '';
+  currentPage = 1;
+
+  closeUnitDetail();
+
+  await loadUnits(currentFilter.tower, currentFilter.project, requestId, currentFilter.search, currentFilter.bedrooms);
 }
 
 async function onSearchChange() {
@@ -191,16 +242,16 @@ async function onSearchChange() {
   currentFilter.search = searchInput?.value?.trim() || '';
   currentPage = 1;
 
-  // Search kết hợp với filter hiện tại (project + tower)
-  await loadUnits(currentFilter.tower, currentFilter.project, requestId, currentFilter.search);
+  // Search kết hợp với filter hiện tại (project + tower + bedrooms)
+  await loadUnits(currentFilter.tower, currentFilter.project, requestId, currentFilter.search, currentFilter.bedrooms);
 }
 
 // =============================================================
 // UNITS LOAD
 // =============================================================
-async function loadUnits(towerId, projectId, requestId, search) {
+async function loadUnits(towerId, projectId, requestId, search, bedrooms) {
   // Show units section khi có filter active
-  const hasFilter = towerId || projectId || (search && search.length > 0);
+  const hasFilter = towerId || projectId || bedrooms || (search && search.length > 0);
   if (!hasFilter) {
     showUnitsSection(false);
     return;
@@ -219,6 +270,7 @@ async function loadUnits(towerId, projectId, requestId, search) {
   if (towerId) params.set('tower', towerId);
   if (projectId) params.set('project', projectId);
   if (search) params.set('search', search);
+  if (bedrooms) params.set('bedrooms', bedrooms); // "5" → backend gte.5
 
   try {
     const result = await apiFetch(`/units?${params.toString()}`);
@@ -249,6 +301,7 @@ async function loadMore() {
   if (currentFilter.tower) params.set('tower', currentFilter.tower);
   if (currentFilter.project) params.set('project', currentFilter.project);
   if (currentFilter.search) params.set('search', currentFilter.search);
+  if (currentFilter.bedrooms) params.set('bedrooms', currentFilter.bedrooms);
 
   try {
     const result = await apiFetch(`/units?${params.toString()}`);
@@ -269,8 +322,11 @@ async function loadMore() {
 // =============================================================
 function showUnitsSection(show) {
   const section = document.getElementById('units-section');
+  const featured = document.getElementById('featured-section');
   if (!section) return;
   section.style.display = show ? 'block' : 'none';
+  // Inverse visibility: hide featured while filtering, show when not
+  if (featured) featured.style.display = show ? 'none' : 'block';
 }
 
 // =============================================================
@@ -312,7 +368,7 @@ function renderUnits(units) {
   }
 
   unitGrid.innerHTML = units.map(unit => `
-    <div class="unit-card" onclick="openUnitModal('${escapeHtml(unit.id)}')">
+    <div class="unit-card" onclick="showUnitDetail('${escapeHtml(unit.id)}')">
       <div class="unit-card-image">
         ${unit.images?.[0]
           ? `<img src="${escapeHtml(unit.images[0])}" alt="${escapeHtml(unit.code)}" loading="lazy" />`
@@ -336,7 +392,7 @@ function renderUnits(units) {
 function appendUnits(units) {
   if (!unitGrid || !units?.length) return;
   unitGrid.insertAdjacentHTML('beforeend', units.map(unit => `
-    <div class="unit-card" onclick="openUnitModal('${escapeHtml(unit.id)}')">
+    <div class="unit-card" onclick="showUnitDetail('${escapeHtml(unit.id)}')">
       <div class="unit-card-image">
         ${unit.images?.[0]
           ? `<img src="${escapeHtml(unit.images[0])}" alt="${escapeHtml(unit.code)}" loading="lazy" />`
@@ -370,7 +426,7 @@ async function loadFeatured() {
     if (!units?.length) return;
 
     featuredGrid.innerHTML = units.slice(0, 6).map((unit, i) => `
-      <div class="featured-card${i % 2 === 1 ? ' offset' : ''}" onclick="openUnitModal('${escapeHtml(unit.id)}')">
+      <div class="featured-card${i % 2 === 1 ? ' offset' : ''}" onclick="showUnitDetail('${escapeHtml(unit.id)}')">
         <div class="featured-card-image">
           ${unit.images?.[0]
             ? `<img src="${escapeHtml(unit.images[0])}" alt="${escapeHtml(unit.code)}" loading="lazy" />`
@@ -389,124 +445,118 @@ async function loadFeatured() {
 }
 
 // =============================================================
-// MODAL (detail)
+// INLINE UNIT DETAIL (replaces popup modal)
 // =============================================================
-window.openUnitModal = async function(unitId) {
-  if (!unitId) return;
+window.showUnitDetail = async function(unitId) {
+  if (!unitId || !unitDetail) return;
+  const wasHidden = !unitDetail.classList.contains('active');
+  unitDetail.classList.add('active');
+  unitDetail.innerHTML = '<div class="udetail-inner"><div class="loading-spinner"></div></div>';
+  // Scroll into view only when first opening (not when switching cards)
+  if (wasHidden) {
+    unitDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   try {
-    const modal = document.getElementById('unit-modal');
-    const overlay = document.getElementById('modal-overlay');
-    const content = document.getElementById('modal-content');
-
-    if (!modal || !content) return;
-
-    content.innerHTML = '<div class="loading-spinner"></div>';
-    modal.classList.add('active');
-    if (overlay) overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-
     const data = await apiFetch(`/units/${encodeURIComponent(unitId)}`);
-
-    const projectName = data.project?.name || '';
-    const towerName = data.tower?.name || '';
-    const detailTitle = [escapeHtml(data.code), projectName, towerName].filter(Boolean).join(' — ');
-
-    const images = Array.isArray(data.images) ? data.images : [];
-    currentModalImages = images;
-    const mainImg = images[0] || '';
-    const videos = Array.isArray(data.videos) ? data.videos : [];
-
-    const videosHtml = videos.length ? `
-      <div class="modal-videos">
-        <h3>Video tham khảo</h3>
-        ${videos.map(v => {
-          if (v.type === 'youtube') {
-            const vid = v.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-            return vid ? `<iframe src="https://www.youtube.com/embed/${vid[1]}" loading="lazy" allowfullscreen></iframe>` : '';
-          }
-          if (v.type === 'vimeo') {
-            const vid = v.url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-            return vid ? `<iframe src="https://player.vimeo.com/video/${vid[1]}" loading="lazy" allowfullscreen></iframe>` : '';
-          }
-          if (v.type === 'tiktok') {
-            return `<blockquote class="tiktok-embed" cite="${escapeHtml(v.url)}"><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">Xem video TikTok</a></blockquote>`;
-          }
-          return `<a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="btn btn-outline">${ICON.video}<span>Xem video</span></a>`;
-        }).join('')}
-      </div>` : '';
-
-    content.innerHTML = `
-      <button class="modal-close" onclick="closeUnitModal()">${ICON.close}</button>
-      <div class="modal-grid">
-        <div class="modal-media">
-          <div class="modal-gallery-main">
-            ${mainImg ? `<img id="modal-main-img" src="${escapeHtml(mainImg)}" alt="${escapeHtml(data.code)}" />` : `<div class="modal-gallery-empty">${escapeHtml(data.code)}</div>`}
-          </div>
-          ${images.length > 1 ? `<div class="modal-gallery-thumbs">${images.map((img, i) => `<button class="modal-thumb ${i === 0 ? 'active' : ''}" onclick="setGalleryImage(${i})"><img src="${escapeHtml(img)}" alt=""></button>`).join('')}</div>` : ''}
-          ${data.floor_plan ? `<a href="${escapeHtml(data.floor_plan)}" target="_blank" rel="noopener" class="modal-floorplan">${ICON.doc}<span>Xem mặt bằng</span></a>` : ''}
-          ${videosHtml}
-        </div>
-        <div class="modal-info">
-          <div class="modal-eyebrow">Căn hộ nội thất cao cấp</div>
-          <h2>${detailTitle}</h2>
-          ${(projectName || towerName) ? `
-            <div class="modal-location">
-              ${projectName ? `<span>${ICON.building}<span>${escapeHtml(projectName)}</span></span>` : ''}
-              ${towerName ? `<span>${ICON.tower}<span>Toà ${escapeHtml(towerName)}</span></span>` : ''}
-            </div>
-          ` : ''}
-          <div class="modal-meta">
-            ${data.area ? `<span>Diện tích<strong>${data.area}m²</strong></span>` : ''}
-            ${data.bedrooms ? `<span>Phòng ngủ<strong>${data.bedrooms}PN</strong></span>` : ''}
-            ${data.floor ? `<span>Tầng<strong>${escapeHtml(data.floor)}</strong></span>` : ''}
-            ${data.style ? `<span>Phong cách<strong>${escapeHtml(data.style)}</strong></span>` : ''}
-          </div>
-          ${data.description ? `<p class="modal-desc">${escapeHtml(data.description)}</p>` : ''}
-          ${data.features?.length ? `
-            <div class="modal-features">
-              <h3>Tiện ích</h3>
-              <ul>${data.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
-            </div>
-          ` : ''}
-          <div class="modal-contact">
-            <a href="tel:${(window.contactPhone || '').replace(/\s/g, '')}" class="btn btn-primary">${ICON.phone}<span>Gọi ngay</span></a>
-            <a href="https://zalo.me/${(window.zaloOA || '')}" target="_blank" rel="noopener" class="btn btn-zalo">${ICON.zalo}<span>Chat Zalo</span></a>
-          </div>
-        </div>
-      </div>
-    `;
+    renderUnitDetail(data);
   } catch (err) {
     console.error('Load unit detail failed:', err);
-    document.getElementById('modal-content').innerHTML = `
-      <button class="modal-close" onclick="closeUnitModal()">${ICON.close}</button>
-      <div class="modal-error">
-        <p>Không thể tải thông tin căn hộ</p>
-        <button class="btn" onclick="closeUnitModal()">Đóng</button>
+    unitDetail.innerHTML = `
+      <div class="udetail-inner">
+        <button class="modal-close" onclick="closeUnitDetail()">${ICON.close}</button>
+        <div class="modal-error">
+          <p>Không thể tải thông tin căn hộ</p>
+          <button class="btn" onclick="closeUnitDetail()">Đóng</button>
+        </div>
       </div>`;
   }
 };
 
-window.setGalleryImage = function(index) {
-  const img = currentModalImages[index];
+function renderUnitDetail(data) {
+  if (!unitDetail) return;
+  const projectName = data.project?.name || '';
+  const towerName = data.tower?.name || '';
+  const detailTitle = [escapeHtml(data.code), projectName, towerName].filter(Boolean).join(' — ');
+
+  const images = Array.isArray(data.images) ? data.images : [];
+  currentDetailImages = images;
+  const mainImg = images[0] || '';
+  const videos = Array.isArray(data.videos) ? data.videos : [];
+
+  const videosHtml = videos.length ? `
+    <div class="modal-videos">
+      <h3>Video tham khảo</h3>
+      ${videos.map(v => {
+        if (v.type === 'youtube') {
+          const vid = v.url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+          return vid ? `<iframe src="https://www.youtube.com/embed/${vid[1]}" loading="lazy" allowfullscreen></iframe>` : '';
+        }
+        if (v.type === 'vimeo') {
+          const vid = v.url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+          return vid ? `<iframe src="https://player.vimeo.com/video/${vid[1]}" loading="lazy" allowfullscreen></iframe>` : '';
+        }
+        if (v.type === 'tiktok') {
+          return `<blockquote class="tiktok-embed" cite="${escapeHtml(v.url)}"><a href="${escapeHtml(v.url)}" target="_blank" rel="noopener">Xem video TikTok</a></blockquote>`;
+        }
+        return `<a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="btn btn-outline">${ICON.video}<span>Xem video</span></a>`;
+      }).join('')}
+    </div>` : '';
+
+  unitDetail.innerHTML = `
+    <div class="udetail-inner">
+      <button class="modal-close" onclick="closeUnitDetail()">${ICON.close}</button>
+      <div class="modal-grid">
+      <div class="modal-media">
+        <div class="modal-gallery-main">
+          ${mainImg ? `<img id="udetail-main-img" src="${escapeHtml(mainImg)}" alt="${escapeHtml(data.code)}" />` : `<div class="modal-gallery-empty">${escapeHtml(data.code)}</div>`}
+        </div>
+        ${images.length > 1 ? `<div class="modal-gallery-thumbs">${images.map((img, i) => `<button class="modal-thumb ${i === 0 ? 'active' : ''}" onclick="setDetailImage(${i})"><img src="${escapeHtml(img)}" alt=""></button>`).join('')}</div>` : ''}
+        ${data.floor_plan ? `<a href="${escapeHtml(data.floor_plan)}" target="_blank" rel="noopener" class="modal-floorplan">${ICON.doc}<span>Xem mặt bằng</span></a>` : ''}
+        ${videosHtml}
+      </div>
+      <div class="modal-info">
+        <div class="modal-eyebrow">Căn hộ nội thất cao cấp</div>
+        <h2>${detailTitle}</h2>
+        ${(projectName || towerName) ? `
+          <div class="modal-location">
+            ${projectName ? `<span>${ICON.building}<span>${escapeHtml(projectName)}</span></span>` : ''}
+            ${towerName ? `<span>${ICON.tower}<span>Toà ${escapeHtml(towerName)}</span></span>` : ''}
+          </div>
+        ` : ''}
+        <div class="modal-meta">
+          ${data.area ? `<span>Diện tích<strong>${data.area}m²</strong></span>` : ''}
+          ${data.bedrooms ? `<span>Phòng ngủ<strong>${data.bedrooms}PN</strong></span>` : ''}
+          ${data.floor ? `<span>Tầng<strong>${escapeHtml(data.floor)}</strong></span>` : ''}
+          ${data.style ? `<span>Phong cách<strong>${escapeHtml(data.style)}</strong></span>` : ''}
+        </div>
+        ${data.description ? `<p class="modal-desc">${escapeHtml(data.description)}</p>` : ''}
+        ${data.features?.length ? `
+          <div class="modal-features">
+            <h3>Tiện ích</h3>
+            <ul>${data.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+          </div>
+        ` : ''}
+        <div class="modal-contact">
+          <a href="tel:${(window.contactPhone || '').replace(/\s/g, '')}" class="btn btn-primary">${ICON.phone}<span>Gọi ngay</span></a>
+          <a href="https://zalo.me/${(window.zaloOA || '')}" target="_blank" rel="noopener" class="btn btn-zalo">${ICON.zalo}<span>Chat Zalo</span></a>
+        </div>
+      </div>
+      </div>
+    </div>
+  `;
+}
+
+window.setDetailImage = function(index) {
+  const img = currentDetailImages[index];
   if (!img) return;
-  const main = document.getElementById('modal-main-img');
+  const main = document.getElementById('udetail-main-img');
   if (main) main.src = img;
-  document.querySelectorAll('.modal-thumb').forEach((t, i) => t.classList.toggle('active', i === index));
+  document.querySelectorAll('#unit-detail .modal-thumb').forEach((t, i) => t.classList.toggle('active', i === index));
 };
 
-window.closeUnitModal = function() {
-  const modal = document.getElementById('unit-modal');
-  const overlay = document.getElementById('modal-overlay');
-  if (modal) modal.classList.remove('active');
-  if (overlay) overlay.classList.remove('active');
-  document.body.style.overflow = '';
+window.closeUnitDetail = function() {
+  if (unitDetail) unitDetail.classList.remove('active');
 };
-
-// Close on overlay click
-document.addEventListener('DOMContentLoaded', () => {
-  const overlay = document.getElementById('modal-overlay');
-  overlay?.addEventListener('click', closeUnitModal);
-});
 
 // =============================================================
 // HELPERS

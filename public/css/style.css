@@ -54,6 +54,7 @@
   --radius-sm: 6px;
   --radius-full: 9999px;
   --shadow: 0 2px 16px rgba(30,26,20,0.08);
+  --shadow-md: 0 4px 20px rgba(30,26,20,0.10);
   --shadow-lg: 0 8px 32px rgba(30,26,20,0.12);
   --shadow-xl: 0 12px 48px rgba(30,26,20,0.14);
   --shadow-gold: 0 4px 24px rgba(229, 186, 34, 0.15);
@@ -1360,6 +1361,82 @@ input, select {
 
 .modal-error .btn {
   margin-top: var(--space-md);
+}
+
+/* === INLINE UNIT DETAIL (replaces popup modal) === */
+#unit-detail {
+  display: none;
+  position: relative;
+  max-width: var(--max-width);
+  margin: 0 auto var(--space-2xl);
+  padding: 0 var(--space-xl);
+  scroll-margin-top: 90px;
+}
+
+#unit-detail.active {
+  display: block;
+}
+
+#unit-detail > .udetail-inner {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid rgba(229, 186, 34, 0.22);
+  border-top: 3px solid var(--gold);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-xl);
+  animation: detailReveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes detailReveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+#unit-detail .modal-close {
+  top: var(--space-md);
+  right: var(--space-md);
+  background: rgba(30, 30, 30, 0.78);
+}
+
+#unit-detail .modal-close:hover {
+  background: var(--black);
+}
+
+@media (max-width: 600px) {
+  #unit-detail {
+    padding: 0 var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+  #unit-detail > .udetail-inner {
+    padding: var(--space-lg);
+  }
+}
+
+#unit-detail.active {
+  display: block;
+}
+
+@keyframes detailReveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+#unit-detail .modal-close {
+  top: var(--space-md);
+  right: var(--space-md);
+  background: rgba(30, 30, 30, 0.78);
+}
+
+#unit-detail .modal-close:hover {
+  background: var(--black);
+}
+
+@media (max-width: 600px) {
+  #unit-detail {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
 }
 
 /* === EMPTY STATE === */
