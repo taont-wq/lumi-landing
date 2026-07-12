@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bedroomSelect?.addEventListener('change', onBedroomChange);
   searchInput?.addEventListener('input', debounce(onSearchChange, 150));
   loadMoreBtn?.addEventListener('click', loadMore);
+  document.getElementById('header-share')?.addEventListener('click', onShareClick);
 
   // Prefetch towers for first project (nếu có sẵn)
   if (projectSelect && projectSelect.options.length > 1) {
@@ -579,4 +580,60 @@ function debounce(fn, delay) {
     clearTimeout(timer);
     timer = setTimeout(() => fn.apply(this, args), delay);
   };
+}
+
+// =============================================================
+// SHARE (header)
+// =============================================================
+async function onShareClick() {
+  const shareData = {
+    title: document.title,
+    text: 'Lumi Design — Nội thất căn hộ cao cấp',
+    url: window.location.href,
+  };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      // User cancelled — no-op
+    }
+    return;
+  }
+
+  // Fallback: copy link to clipboard
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+    } else {
+      const tmp = document.createElement('textarea');
+      tmp.value = shareData.url;
+      tmp.style.position = 'fixed';
+      tmp.style.opacity = '0';
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+    }
+    showToast('Đã sao chép liên kết');
+  } catch (err) {
+    console.error('Share failed:', err);
+    showToast('Không thể chia sẻ');
+  }
+}
+
+let toastTimer;
+function showToast(message) {
+  let toast = document.getElementById('lumitoast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'lumitoast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  // Force reflow so the transition replays on repeated calls
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
 }

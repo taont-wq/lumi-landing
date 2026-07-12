@@ -245,6 +245,51 @@ input, select {
   transform: scale(1.08);
 }
 
+.header-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold);
+  border: 1.5px solid rgba(229, 186, 34, 0.55);
+  transition: var(--transition);
+}
+
+.header-share:hover {
+  background: var(--gold);
+  color: var(--black);
+  transform: scale(1.08);
+}
+
+/* === SHARE TOAST === */
+#lumitoast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(16px);
+  z-index: 400;
+  padding: 12px 22px;
+  background: var(--black);
+  color: var(--gold);
+  border: 1px solid rgba(229, 186, 34, 0.4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#lumitoast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* === HERO + FILTERS === */
 .hero {
   padding: calc(72px + var(--space-3xl)) var(--space-xl) var(--space-2xl);
@@ -1208,20 +1253,8 @@ input, select {
   margin-bottom: var(--space-md);
   color: var(--black);
   position: relative;
-  padding-bottom: var(--space-sm);
   padding-left: var(--space-md);
   border-left: 3px solid var(--gold);
-}
-
-.modal-info h2::after {
-  content: "";
-  position: absolute;
-  left: calc(var(--space-md) + 3px);
-  bottom: 0;
-  width: 48px;
-  height: 3px;
-  background: var(--gold);
-  border-radius: 2px;
 }
 
 .modal-eyebrow {
@@ -1249,7 +1282,6 @@ input, select {
   align-items: center;
   gap: 8px;
   background: var(--bg);
-  border: 1px solid rgba(229, 186, 34, 0.18);
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -1400,6 +1432,7 @@ input, select {
 
 #unit-detail > .udetail-inner {
   position: relative;
+  margin-top: var(--space-xl);
   background: var(--bg-card);
   border-radius: var(--radius);
   border: 1px solid rgba(229, 186, 34, 0.22);
